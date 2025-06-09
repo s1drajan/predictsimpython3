@@ -16,7 +16,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
-from __future__ import division
+
 
 def normalizeRecord(record):
   return record if record else (0.0, 0.0, 0.0, 0.0)
@@ -107,8 +107,8 @@ class PredictBase(object):
         print (alpha)
         print ((pAvg, pSquare, pCount, pSum))
         print ((nAvg, nSquare, nCount, nSum))
-        print (nAvg * nSum)
-        print nSquare - nAvg * nSum
+        print((nAvg * nSum))
+        print(nSquare - nAvg * nSum)
         assert False
       self.db.saveRecord(tag, param_name, nAvg, nSquare, nCount, nSum)
       if res is None:

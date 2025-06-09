@@ -1,11 +1,12 @@
-from predictor import Predictor
+from .predictor import Predictor
 #import numpy as np
 import math
 import itertools
-from valopt.models.linear_model import LinearModel
+from .valopt.models.linear_model import LinearModel
 
 from operator import mul    # or mul=lambda x,y:x*y
 from fractions import Fraction
+from functools import reduce
 
 def kPn(n,k):
   return int( reduce(mul, (Fraction(n-i, i+1) for i in range(k)), 1) )
@@ -45,37 +46,37 @@ class PredictorSgdlinear(Predictor):
         #machine learning thing
         m=LinearModel(self.n_features)
 
-        if "max_runtime" in options["scheduler"]["predictor"].keys():
+        if "max_runtime" in list(options["scheduler"]["predictor"].keys()):
             self.max_runtime=options["scheduler"]["predictor"]["max_runtime"]
         else:
             self.max_runtime=False
 
         if options["scheduler"]["predictor"]["loss"]=="squaredloss":
-            from valopt.losses.squared_loss import SquaredLoss
+            from .valopt.losses.squared_loss import SquaredLoss
             l=SquaredLoss(m,maxloss=self.max_runtime)
         elif options["scheduler"]["predictor"]["loss"]=="composite":
 
-            from valopt.losses.composite import CompositeLoss
+            from .valopt.losses.composite import CompositeLoss
             if options["scheduler"]["predictor"]["leftside"]=="abs":
-                from valopt.losses.losscurves.abs import Abscurve
+                from .valopt.losses.losscurves.abs import Abscurve
                 leftside=Abscurve(m,options["scheduler"]["predictor"]["leftparam"])
             elif options["scheduler"]["predictor"]["leftside"]=="square":
-                from valopt.losses.losscurves.square import Squarecurve
+                from .valopt.losses.losscurves.square import Squarecurve
                 leftside=Squarecurve(m,options["scheduler"]["predictor"]["leftparam"])
             elif options["scheduler"]["predictor"]["leftside"]=="exp":
-                from valopt.losses.losscurves.exp import Expcurve
+                from .valopt.losses.losscurves.exp import Expcurve
                 leftside=Expcurve(m,options["scheduler"]["predictor"]["leftparam"])
             else:
                 raise ValueError("predictor config error: no leftside specified")
 
             if options["scheduler"]["predictor"]["rightside"]=="abs":
-                from valopt.losses.losscurves.abs import Abscurve
+                from .valopt.losses.losscurves.abs import Abscurve
                 rightside=Abscurve(m,options["scheduler"]["predictor"]["rightparam"])
             elif options["scheduler"]["predictor"]["rightside"]=="square":
-                from valopt.losses.losscurves.square import Squarecurve
+                from .valopt.losses.losscurves.square import Squarecurve
                 rightside=Squarecurve(m,options["scheduler"]["predictor"]["rightparam"])
             elif options["scheduler"]["predictor"]["rightside"]=="exp":
-                from valopt.losses.losscurves.exp import Expcurve
+                from .valopt.losses.losscurves.exp import Expcurve
                 rightside=Expcurve(m,options["scheduler"]["predictor"]["rightparam"])
             else:
                 raise ValueError("predictor config error: no rightside specified")
@@ -86,14 +87,14 @@ class PredictorSgdlinear(Predictor):
             raise ValueError("predictor config error: no valid loss specified.")
 
 
-        if "lambda" in options["scheduler"]["predictor"].keys():
+        if "lambda" in list(options["scheduler"]["predictor"].keys()):
             if options["scheduler"]["predictor"]["regularization"]=="l1":
-                from valopt.losses.regularizations.l1 import L1
-                from valopt.losses.regularized_loss import RegularizedLoss
+                from .valopt.losses.regularizations.l1 import L1
+                from .valopt.losses.regularized_loss import RegularizedLoss
                 l=RegularizedLoss(m,l,L1(),options["scheduler"]["predictor"]["lambda"])
             elif options["scheduler"]["predictor"]["regularization"]=="l2":
-                from valopt.losses.regularizations.l2 import L2
-                from valopt.losses.regularized_loss import RegularizedLoss
+                from .valopt.losses.regularizations.l2 import L2
+                from .valopt.losses.regularized_loss import RegularizedLoss
                 l=RegularizedLoss(m,l,L2(),options["scheduler"]["predictor"]["lambda"])
             else:
                 raise ValueError("predictor config error: lambda present and no valid regularizer specified.")
@@ -101,10 +102,10 @@ class PredictorSgdlinear(Predictor):
 
 
         if options["scheduler"]["predictor"]["gd"]=="NAG":
-            from valopt.algos.nag import NAG
+            from .valopt.algos.nag import NAG
             self.model=NAG(m,l,options["scheduler"]["predictor"]["eta"],verbose=False)
         elif options["scheduler"]["predictor"]["gd"]=="sNAG":
-            from valopt.algos.snag import sNAG
+            from .valopt.algos.snag import sNAG
             self.model=sNAG(m,l,options["scheduler"]["predictor"]["eta"],verbose=False)
 
         if not options["scheduler"]["predictor"]["weight"]:
@@ -120,11 +121,11 @@ class PredictorSgdlinear(Predictor):
             return eval(wstr)
         self.weight=weight
 
-        if "predict_multiplier" in options["scheduler"]["predictor"].keys():
+        if "predict_multiplier" in list(options["scheduler"]["predictor"].keys()):
             self.predict_multiplier = options["scheduler"]["predictor"]["predict_multiplier"]
         else:
             self.predict_multiplier = 1
-        print(self.predict_multiplier)
+        print((self.predict_multiplier))
 
 
     def make_x(self,job,current_time,list_running_jobs):
@@ -133,20 +134,20 @@ class PredictorSgdlinear(Predictor):
         x=[0]*self.n_features
 
         #checks on user internal memory
-        if not self.user_job_last1.has_key(job.user_id):
+        if job.user_id not in self.user_job_last1:
             self.user_job_last1[job.user_id] = None
-        if not self.user_job_last2.has_key(job.user_id):
+        if job.user_id not in self.user_job_last2:
             self.user_job_last2[job.user_id] = None
-        if not self.user_job_last3.has_key(job.user_id):
+        if job.user_id not in self.user_job_last3:
             self.user_job_last3[job.user_id] = None
 
-        if not self.user_sum_cores.has_key(job.user_id):
+        if job.user_id not in self.user_sum_cores:
             self.user_sum_cores[job.user_id] = 0.0
-        if not self.user_sum_runtimes.has_key(job.user_id):
+        if job.user_id not in self.user_sum_runtimes:
             self.user_sum_runtimes[job.user_id] = 0.0
-        if not self.user_n_jobs.has_key(job.user_id):
+        if job.user_id not in self.user_n_jobs:
             self.user_n_jobs[job.user_id] = 0.0
-        if not self.user_last_ending.has_key(job.user_id):
+        if job.user_id not in self.user_last_ending:
             self.user_last_ending[job.user_id] = 0.0
 
         #TODO:make x
@@ -347,13 +348,13 @@ class PredictorSgdlinear(Predictor):
 
         #updating our data
         #store user previous run time history
-        assert self.user_job_last1.has_key(job.user_id) == True
-        assert self.user_job_last2.has_key(job.user_id) == True
-        assert self.user_job_last3.has_key(job.user_id) == True
-        assert self.user_sum_runtimes.has_key(job.user_id) == True
-        assert self.user_sum_cores.has_key(job.user_id) == True
-        assert self.user_n_jobs.has_key(job.user_id) == True
-        assert self.user_last_ending.has_key(job.user_id) == True
+        assert (job.user_id in self.user_job_last1) == True
+        assert (job.user_id in self.user_job_last2) == True
+        assert (job.user_id in self.user_job_last3) == True
+        assert (job.user_id in self.user_sum_runtimes) == True
+        assert (job.user_id in self.user_sum_cores) == True
+        assert (job.user_id in self.user_n_jobs) == True
+        assert (job.user_id in self.user_last_ending) == True
         self.user_job_last3[job.user_id] = self.user_job_last2[job.user_id]
         self.user_job_last2[job.user_id] = self.user_job_last1[job.user_id]
         self.user_job_last1[job.user_id] = job

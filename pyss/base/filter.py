@@ -2,11 +2,11 @@
 # receives swf input on stdin, prints it back to stdout minus the lines that
 # raise asserts in the simulator
 import fileinput
-import workload_parser
-import prototype
+from . import workload_parser
+from . import prototype
 import sys
 
-from prototype import _job_input_to_job
+from .prototype import _job_input_to_job
 
 for line in fileinput.input():
     if line.lstrip().startswith(';'):

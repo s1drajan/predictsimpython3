@@ -1,7 +1,7 @@
-from common import CpuSnapshot
-from easy_backfill_scheduler import EasyBackfillScheduler
+from .common import CpuSnapshot
+from .easy_backfill_scheduler import EasyBackfillScheduler
 
-import common_correctors
+from . import common_correctors
 from base.prototype import JobStartEvent
 
 class  ShrinkingEasyScheduler(EasyBackfillScheduler):

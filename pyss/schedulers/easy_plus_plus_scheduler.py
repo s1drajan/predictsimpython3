@@ -1,4 +1,4 @@
-from common import Scheduler, CpuSnapshot, list_copy
+from .common import Scheduler, CpuSnapshot, list_copy
 from pyss.base.prototype import JobStartEvent, RunSchedulerEvent
 
 

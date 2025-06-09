@@ -5,7 +5,7 @@ Created by Alexander Goponenko at 9/7/2021
 
 NOTE: "nodes" and "processors" are treated as they are a same thing
 """
-from __future__ import division
+
 
 from sortedcontainers import SortedSet
 import docplex.cp.model as dcpm
@@ -151,12 +151,12 @@ class CplexBasicScheduler(Scheduler):
     resource_list = []
 
     print("========================================================================================")
-    print("Scheduling at time {}".format(time))
+    print(("Scheduling at time {}".format(time)))
     # process running jobs
     for job in self.jobs.get_running_jobs():
       assert job.predicted_finish_time >= time
       assert job.predicted_finish_time > time
-      print("Running job {}; processors: {}; finish {}".format(job.id, job.num_required_processors, job.predicted_finish_time))
+      print(("Running job {}; processors: {}; finish {}".format(job.id, job.num_required_processors, job.predicted_finish_time)))
       # The duration must be > 1, since ORTools doesn't accept duration 0.
       remaining_duration =max(1, job.predicted_finish_time - time)
       max_makespan = max(max_makespan, remaining_duration)
@@ -178,7 +178,7 @@ class CplexBasicScheduler(Scheduler):
       duration = max(1, job.predicted_run_time)
       min_start = 0
       max_start = max_makespan - duration
-      print("Queue job {}; processors: {}; duration: {}; submited: {}".format(job.id, job.num_required_processors, duration, job.submit_time))
+      print(("Queue job {}; processors: {}; duration: {}; submited: {}".format(job.id, job.num_required_processors, duration, job.submit_time)))
       interval = dcpm.interval_var(start=(min_start, max_start), size=duration, optional=False, name='Q{}'.format(job.id))
       queued_job_dict[job.id] = (job, interval, job.num_required_processors)
       interval_list.append(interval)
@@ -199,7 +199,7 @@ class CplexBasicScheduler(Scheduler):
 
     # add objective
     # AWF
-    AWF = [nodes*job.predicted_run_time * (time - job.submit_time + dcpm.end_of(interval)) for job, interval, nodes in queued_job_dict.values()]
+    AWF = [nodes*job.predicted_run_time * (time - job.submit_time + dcpm.end_of(interval)) for job, interval, nodes in list(queued_job_dict.values())]
     objective_var = dcpm.sum(AWF)
 
     # ASpWAS
@@ -207,7 +207,7 @@ class CplexBasicScheduler(Scheduler):
     # M1 = []
     M2 = []
     M3 = []
-    for job, interval, nodes in queued_job_dict.values():
+    for job, interval, nodes in list(queued_job_dict.values()):
       Tw = float(time) + dcpm.start_of(interval) - float(job.submit_time)
       # F = float(time) + dcpm.end_of(interval) - float(job.submit_time)
       F = Tw + float(job.predicted_run_time)
@@ -230,7 +230,7 @@ class CplexBasicScheduler(Scheduler):
     # print(res)
     # sorting results according to the priorities
     # TODO: make it an configuration parameter
-    sorted_dict_values = sorted(queued_job_dict.values(), key=lambda x: x[0].submit_time)
+    sorted_dict_values = sorted(list(queued_job_dict.values()), key=lambda x: x[0].submit_time)
     result = []
     if return_plan:
       for job, interval, _ in sorted_dict_values :

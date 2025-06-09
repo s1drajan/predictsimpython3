@@ -1,4 +1,4 @@
-from common import Scheduler, CpuSnapshot, list_copy
+from .common import Scheduler, CpuSnapshot, list_copy
 from base.prototype import JobStartEvent
 
 
@@ -70,7 +70,7 @@ class Distribution(object):
 
     def expected_run_time(self, job):
         key_value_sum = value_sum = 0
-        for (key,value) in self.bins.iteritems():
+        for (key,value) in self.bins.items():
             if key <= job.user_estimated_run_time:
                 key_value_sum  += (key * value)
         value_sum += value
@@ -97,8 +97,8 @@ class  OrigProbabilisticEasyScheduler(Scheduler):
 
         #self.work_list = [[None for i in xrange(self.num_processors+1)] for j in xrange(self.num_processors+1)]
         self.M = {}
-        for c in xrange(self.num_processors+1):
-            for n in xrange(self.num_processors+1):
+        for c in range(self.num_processors+1):
+            for n in range(self.num_processors+1):
                 self.M[c, n] = 0.0
 
         self.max_user_rounded_estimated_run_time = 0
@@ -114,7 +114,7 @@ class  OrigProbabilisticEasyScheduler(Scheduler):
             self.prev_max_user_rounded_estimated_run_time = self.max_user_rounded_estimated_run_time
             self.max_user_rounded_estimated_run_time = rounded_up_estimated_time
 
-        if  not self.user_distribution.has_key(job.user_id):
+        if  job.user_id not in self.user_distribution:
             self.user_distribution[job.user_id] = Distribution(job, self.window_size)
         self.user_distribution[job.user_id].touch(2*self.max_user_rounded_estimated_run_time)
 
@@ -217,20 +217,20 @@ class  OrigProbabilisticEasyScheduler(Scheduler):
 
         num_of_currently_running_jobs = len(self.currently_running_jobs)
 
-        for c in xrange(K + 1):
+        for c in range(K + 1):
             M[0, c] = 0.0
 
-        for n in xrange(1, num_of_currently_running_jobs+1):
+        for n in range(1, num_of_currently_running_jobs+1):
             M[n, 0] = 1.0
 
-        for n in xrange(1, num_of_currently_running_jobs+1):
+        for n in range(1, num_of_currently_running_jobs+1):
             job_n = self.currently_running_jobs[n-1] # the n'th job: recall that a list has a zero index
             job_n_required_processors = job_n.num_required_processors
             Pn = self.probability_of_running_job_to_end_upto(time, current_time, job_n)
-            for c in xrange (1, job_n_required_processors):
+            for c in range (1, job_n_required_processors):
                 val = M[n-1, c]
                 M[n, c] = val + (1.0 - val) * Pn
-            for c in xrange (job_n_required_processors, K + 1):
+            for c in range (job_n_required_processors, K + 1):
                 val = M[n-1, c]
                 M[n, c] = val + (M[n, c - job_n_required_processors] - val) * Pn
 
@@ -263,7 +263,7 @@ class  OrigProbabilisticEasyScheduler(Scheduler):
         num_of_jobs_in_last_bins   = 0
         job_distribution = self.user_distribution[job.user_id]
 
-        for (key,value) in job_distribution.bins.iteritems():
+        for (key,value) in job_distribution.bins.items():
 
             if   key > rounded_up_estimated_remaining_duration:
                 num_of_jobs_in_last_bins  += value
@@ -298,7 +298,7 @@ class  OrigProbabilisticEasyScheduler(Scheduler):
         num_of_jobs_in_last_bins = 0
         rounded_up_user_estimated_run_time = 2 * job.user_estimated_run_time - 1
 
-        for key in job_distribution.bins.keys():
+        for key in list(job_distribution.bins.keys()):
             if key > rounded_up_user_estimated_run_time:
                 num_of_jobs_in_last_bins  += job_distribution.bins[key]
 

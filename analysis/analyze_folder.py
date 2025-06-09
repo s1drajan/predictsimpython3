@@ -30,8 +30,8 @@ import sys
 import os
 import glob
 import argparse
-import calculate_metrics as metrics
-from table_log import TableLog
+from . import calculate_metrics as metrics
+from .table_log import TableLog
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Calculate metrics for all swf files in input directory")
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     print(header)
     output.log(header)
     for file in input_files:
-        print("analyzing {}".format(os.path.basename(file)))
+        print(("analyzing {}".format(os.path.basename(file))))
         data, config = os.path.basename(file).split('___')
         config = config.split('.')[0]
         res = metrics.calculate_metrics(file, notrim=not args.trim)

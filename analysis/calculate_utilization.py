@@ -28,8 +28,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 
-from __future__ import division
-from docopt import docopt
+
+from .docopt import docopt
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -113,14 +113,14 @@ def calculate_different_utilizations(in_file):
   # print ("Latest time: {}".format(latest_good_time))
   end_times = sorted(df['End Time'])
   earliest_good_time = end_times[len(end_times)//100]
-  print("Utilization excluding 1% of first jobs and cooldown: {}".format(Utilization(df, earliest_good_time, latest_good_time, numNodes)))
+  print(("Utilization excluding 1% of first jobs and cooldown: {}".format(Utilization(df, earliest_good_time, latest_good_time, numNodes))))
 
 
-  print("Whole interval Utilization: {}".format(Utilization(df, df['Submit Time'].min(), df['End Time'].max(), numNodes)))
+  print(("Whole interval Utilization: {}".format(Utilization(df, df['Submit Time'].min(), df['End Time'].max(), numNodes))))
 
-  print("Utilization excluding cooldown: {}".format(Utilization(df, df['Submit Time'].min(), latest_good_time, numNodes)))
+  print(("Utilization excluding cooldown: {}".format(Utilization(df, df['Submit Time'].min(), latest_good_time, numNodes))))
 
-  print("Utilization excluding warm-up: {}".format(Utilization(df, earliest_good_time, df['End Time'].max(), numNodes)))
+  print(("Utilization excluding warm-up: {}".format(Utilization(df, earliest_good_time, df['End Time'].max(), numNodes))))
 
 
 

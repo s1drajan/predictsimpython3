@@ -23,13 +23,13 @@ dict_path = '../../../experiments/experiment_dicts_small.py'
 
 def nice(s):
 	# transform an dict into something command-line compatible, the ugliest way!
-	print "DO NOT USE nice()!"
+	print("DO NOT USE nice()!")
 	return str(s).translate(None, " ':/(){},\"").replace("name", "").replace("predictor_sgdlinear", "gdl").replace("max_coresauto", "").replace("regularizationl2", "").replace("lambda4000000000", "").replace("gdNAG", "")
 
 
 
 def hash(s):
-	print "DO NOT USE hash()!"
+	print("DO NOT USE hash()!")
 	return hashlib.sha1(nice(s)).hexdigest()
 
 
@@ -190,8 +190,8 @@ def db_init_new_db_dir():
 					wrong = False
 					break
 			if wrong:
-				print "rm", output_swf
-				print "rm", output_swf+".out"
+				print("rm", output_swf)
+				print("rm", output_swf+".out")
 				nconf_skipped += 1
 				state = "ERROR"
 			else:
@@ -206,7 +206,7 @@ def db_init_new_db_dir():
 			}
 		curs.execute("INSERT INTO expes VALUES (?, ?, 'None', ?)", (opt2hash(conf), state, json.dumps(conf)))
 		
-	print nconf, "expes =", len(sched_configs), "todo +", nconf_skipped, "in error +", nconf_finished, "finished"
+	print(nconf, "expes =", len(sched_configs), "todo +", nconf_skipped, "in error +", nconf_finished, "finished")
 
 
 
@@ -249,8 +249,8 @@ def update_hash_doing(expe_h, status):
 	expe = c.fetchone()
 	print(expe)
 	
-	if expe[1] != u'DOING':
-		print("ERROR: This expe is not DOING (s: %s)" % expe[1])
+	if expe[1] != 'DOING':
+		print(("ERROR: This expe is not DOING (s: %s)" % expe[1]))
 		return
 	
 	c.execute('UPDATE expes SET state=? WHERE hash=?', (status,expe_h))
@@ -262,11 +262,11 @@ def update_hash_doing(expe_h, status):
 
 
 def action_done(expe_h):
-	update_hash_doing(expe_h, u'DONE')
+	update_hash_doing(expe_h, 'DONE')
 
 
 def action_error(expe_h):
-	update_hash_doing(expe_h, u'ERROR')
+	update_hash_doing(expe_h, 'ERROR')
 
 
 def action_print(id=None):
@@ -277,9 +277,9 @@ def action_print(id=None):
 		sql += ' WHERE hash="'+ str(id)+'"'
 	sql += ' ORDER BY hash'
 	for row in c.execute(sql):
-		print row
+		print(row)
 		count += 1
-	print "Number of entries:", count
+	print("Number of entries:", count)
 
 
 
@@ -339,7 +339,7 @@ def action_stats():
 
 	n = nconf_finished
 	if n != 0:
-		print "min: ",floatToTime(mini), "  ave: ",floatToTime(summ/n), "  max: ",floatToTime(maxi), "  n:", n
+		print("min: ",floatToTime(mini), "  ave: ",floatToTime(summ/n), "  max: ",floatToTime(maxi), "  n:", n)
 
 		histo = np.histogram(data, bins=[0,10*60,40*60,1.5*3600,3*3600,6*3600,12*3600,25*3600,999*3600])
 		histo_range = max(histo[0])
@@ -351,20 +351,20 @@ def action_stats():
 			for tick in range(int( histo[0][i] * n_ticks / histo_range)):
 				printf("∎")
 			printf('\n')
-	print nconf, "expes =", len(configs), "todo +", nconf_skipped, "in error +", nconf_finished, "finished"
+	print(nconf, "expes =", len(configs), "todo +", nconf_skipped, "in error +", nconf_finished, "finished")
 
 
 def action_stats_db():
 	c = conn.cursor()
 	
 	count = len(c.execute('SELECT * FROM expes WHERE state="WAIT"').fetchall())
-	print "Wait:", count
+	print("Wait:", count)
 	count = len(c.execute('SELECT * FROM expes WHERE state="DONE"').fetchall())
-	print "Done:", count
+	print("Done:", count)
 	count = len(c.execute('SELECT * FROM expes WHERE state="ERROR"').fetchall())
-	print "Error:", count
+	print("Error:", count)
 	count = len(c.execute('SELECT * FROM expes WHERE state="DOING"').fetchall())
-	print "Doing:", count
+	print("Doing:", count)
 
 
 
@@ -392,21 +392,21 @@ def action_copy():
 					state = "DONE"
 					break
 			if state == "ERROR":
-				print "rm", output_swf
-				print "rm", output_swf+".out"
+				print("rm", output_swf)
+				print("rm", output_swf+".out")
 				nerror += 1
 			elif state == "DONE":
 				cmd = "rsync -avz --remove-source-files -e 'ssh -p 12345' "+output_swf+" glesser@localhost:/home/glesser/FSE_simul/internship/experiments/data/"+expe_name+"/simulations/"
-				print cmd
+				print(cmd)
 				os.system(cmd)
 				cmd = "rsync -avz -e 'ssh -p 12345' "+output_swf+".out"+" glesser@localhost:/home/glesser/FSE_simul/internship/experiments/data/"+expe_name+"/simulations/"
-				print cmd
+				print(cmd)
 				os.system(cmd)
 				ncopy += 1
 			else:
 				#print 'nano "'+output_swf+".out"+'"'
 				nunkn += 1
-	print "Copied:", ncopy, " // Error:", nerror, " // Unknwown:", nunkn
+	print("Copied:", ncopy, " // Error:", nerror, " // Unknwown:", nunkn)
 
 
 
@@ -420,7 +420,7 @@ def action_check_db(reset=False):
 		new_state = "UNKNOWN"
 		if not os.path.isfile(output_swf) :
 			if os.path.isfile(output_swf+".out") :
-				print("rm", output_swf+".out")
+				print(("rm", output_swf+".out"))
 				exit(0)
 			new_state = "WAIT"
 		else:
@@ -439,14 +439,14 @@ def action_check_db(reset=False):
 				new_state = "NOOUT"
 				
 		if expedb[1] != new_state:
-			print expedb[1], "!=", new_state, "for", expedb[0]
+			print(expedb[1], "!=", new_state, "for", expedb[0])
 			if reset:
 				if expedb[1] == "DOING":
 					c.execute('UPDATE expes SET state="WAIT" WHERE hash=?', (expedb[0],))
 				if expedb[1] == "DONE" and new_state == "WAIT":
 					c.execute('UPDATE expes SET state="WAIT" WHERE hash=?', (expedb[0],))
 			if new_state == "UNKNOWN":
-				print "investigate '"+output_swf+"'"
+				print("investigate '"+output_swf+"'")
 	
 	conn.commit()
 
@@ -455,12 +455,12 @@ def action_sql(cmd):
 	c = conn.cursor()
 	expes = c.execute(cmd).fetchall()
 	for expedb in expes:
-		print expedb
+		print(expedb)
 	conn.commit()
 
 
 def action_unnice(s):
-	print filename2opt(s)
+	print(filename2opt(s))
 
 
 

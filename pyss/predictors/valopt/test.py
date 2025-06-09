@@ -31,38 +31,38 @@ def run_data(filename,alg,replay=False,period1=100,period2=1000):
         alg.fit(X[i],Y[i])
         i+=1
         j+=1
-    print j
+    print(j)
 
 def run_ssgd(dataset,loss,model="linear",alpha=1,regularizer=None,verbose=False,scaler="scale_mean0",replay=False,period1=1,period2=1):
     #regularized sgd
-    from algos.ssgd import SSGD
-    print("dataset %s using model %s, %s-regularized sgd squared loss and scaling %s. eta=0.01 and replay=%s"%(dataset,model,regularizer,scaler,replay))
+    from .algos.ssgd import SSGD
+    print(("dataset %s using model %s, %s-regularized sgd squared loss and scaling %s. eta=0.01 and replay=%s"%(dataset,model,regularizer,scaler,replay)))
 
     if model=="linear":
-        from models.linear_model import LinearModel
+        from .models.linear_model import LinearModel
         m=LinearModel(2)
     elif model=="affine":
-        from models.affine_model import AffineModel
+        from .models.affine_model import AffineModel
         m=AffineModel(2)
     else:
         raise ValueError("no valid model specified")
 
     if loss=="squared_loss":
-        from losses.squared_loss import SquaredLoss
+        from .losses.squared_loss import SquaredLoss
         ls=SquaredLoss(m)
     elif loss=="abs_loss":
-        from losses.abs_loss import AbsLoss
+        from .losses.abs_loss import AbsLoss
         ls=AbsLoss(m)
     else:
         raise ValueError("no valid loss specified")
 
     if regularizer=="l2":
-        from losses.regularized_loss import RegularizedLoss
-        from losses.regularizations.l2 import L2
+        from .losses.regularized_loss import RegularizedLoss
+        from .losses.regularizations.l2 import L2
         l=RegularizedLoss(m,ls,L2(),alpha)
     elif regularizer=="l1":
-        from losses.regularized_loss import RegularizedLoss
-        from losses.regularizations.l1 import L1
+        from .losses.regularized_loss import RegularizedLoss
+        from .losses.regularizations.l1 import L1
         l=RegularizedLoss(m,ls,L1(),alpha)
     elif regularizer==None:
         l=ls
@@ -73,39 +73,39 @@ def run_ssgd(dataset,loss,model="linear",alpha=1,regularizer=None,verbose=False,
 
     run_data("datasets/%s"%dataset,alg,replay=replay)
     print("The parameter vector after training is")
-    print(m.get_param_vector())
+    print((m.get_param_vector()))
     del m, ls, l, alg
 
 def run_sgd(dataset,loss,model="linear",alpha=1,regularizer=None,verbose=False):
     #regularized sgd
-    from algos.sgd import SGD
-    print("dataset %s using model %s, %s-regularized sgd squared loss. eta=0.01"%(dataset,model,regularizer))
+    from .algos.sgd import SGD
+    print(("dataset %s using model %s, %s-regularized sgd squared loss. eta=0.01"%(dataset,model,regularizer)))
 
     if model=="linear":
-        from models.linear_model import LinearModel
+        from .models.linear_model import LinearModel
         m=LinearModel(2)
     elif model=="affine":
-        from models.affine_model import AffineModel
+        from .models.affine_model import AffineModel
         m=AffineModel(2)
     else:
         raise ValueError("no valid model specified")
 
     if loss=="squared_loss":
-        from losses.squared_loss import SquaredLoss
+        from .losses.squared_loss import SquaredLoss
         ls=SquaredLoss(m)
     elif loss=="abs_loss":
-        from losses.abs_loss import AbsLoss
+        from .losses.abs_loss import AbsLoss
         ls=AbsLoss(m)
     else:
         raise ValueError("no valid loss specified")
 
     if regularizer=="l2":
-        from losses.regularized_loss import RegularizedLoss
-        from losses.regularizations.l2 import L2
+        from .losses.regularized_loss import RegularizedLoss
+        from .losses.regularizations.l2 import L2
         l=RegularizedLoss(m,ls,L2(),alpha)
     elif regularizer=="l1":
-        from losses.regularized_loss import RegularizedLoss
-        from losses.regularizations.l1 import L1
+        from .losses.regularized_loss import RegularizedLoss
+        from .losses.regularizations.l1 import L1
         l=RegularizedLoss(m,ls,L1(),alpha)
     elif regularizer==None:
         l=ls
@@ -116,81 +116,81 @@ def run_sgd(dataset,loss,model="linear",alpha=1,regularizer=None,verbose=False):
 
     run_data("datasets/%s"%dataset,alg)
     print("The parameter vector after training is")
-    print(m.get_param_vector())
+    print((m.get_param_vector()))
     del m, ls, l, alg
 
 
 def run_ng(dataset,loss,alpha=1,regularizer=None,verbose=False,eta=0.01):
     #normalized gradient from langford paper of     print("dataset %s using model lineara,  normalized gradient algorithm with %s-regularized %s loss."%(dataset,regularizer,loss))
 
-    from models.linear_model import LinearModel
+    from .models.linear_model import LinearModel
     m=LinearModel(2)
 
     if loss=="squared_loss":
-        from losses.squared_loss import SquaredLoss
+        from .losses.squared_loss import SquaredLoss
         ls=SquaredLoss(m)
     elif loss=="abs_loss":
-        from losses.abs_loss import AbsLoss
+        from .losses.abs_loss import AbsLoss
         ls=AbsLoss(m)
     else:
         raise ValueError("no valid loss specified")
 
     if regularizer=="l2":
-        from losses.regularized_loss import RegularizedLoss
-        from losses.regularizations.l2 import L2
+        from .losses.regularized_loss import RegularizedLoss
+        from .losses.regularizations.l2 import L2
         l=RegularizedLoss(m,ls,L2(),alpha)
     elif regularizer=="l1":
-        from losses.regularized_loss import RegularizedLoss
-        from losses.regularizations.l1 import L1
+        from .losses.regularized_loss import RegularizedLoss
+        from .losses.regularizations.l1 import L1
         l=RegularizedLoss(m,ls,L1(),alpha)
     elif regularizer==None:
         l=ls
     else:
         raise ValueError("invalid regularization specified")
 
-    from algos.ng import NG
+    from .algos.ng import NG
     alg=NG(m,l,eta,verbose=verbose)
 
     run_data("datasets/%s"%dataset,alg)
     print("The parameter vector after training is")
-    print(m.get_param_vector())
+    print((m.get_param_vector()))
     del m, ls, l, alg
 
 
 def run_nag(dataset,loss,alpha=1,regularizer=None,verbose=False,eta=0.01):
     #normalized gradient from langford paper of     print("dataset %s using model lineara,  normalized gradient algorithm with %s-regularized %s loss."%(dataset,regularizer,loss))
 
-    from models.linear_model import LinearModel
+    from .models.linear_model import LinearModel
     m=LinearModel(2)
 
     if loss=="squared_loss":
-        from losses.squared_loss import SquaredLoss
+        from .losses.squared_loss import SquaredLoss
         ls=SquaredLoss(m)
     elif loss=="abs_loss":
-        from losses.abs_loss import AbsLoss
+        from .losses.abs_loss import AbsLoss
         ls=AbsLoss(m)
     else:
         raise ValueError("no valid loss specified")
 
     if regularizer=="l2":
-        from losses.regularized_loss import RegularizedLoss
-        from losses.regularizations.l2 import L2
+        from .losses.regularized_loss import RegularizedLoss
+        from .losses.regularizations.l2 import L2
         l=RegularizedLoss(m,ls,L2(),alpha)
     elif regularizer=="l1":
-        from losses.regularized_loss import RegularizedLoss
-        from losses.regularizations.l1 import L1
+        from .losses.regularized_loss import RegularizedLoss
+        from .losses.regularizations.l1 import L1
         l=RegularizedLoss(m,ls,L1(),alpha)
     elif regularizer==None:
         l=ls
     else:
         raise ValueError("invalid regularization specified")
 
-    from algos.nag import NAG
+    from .algos.nag import NAG
     alg=NAG(m,l,eta,verbose=verbose)
 
     run_data("datasets/%s"%dataset,alg)
     print("The parameter vector after training is")
-    print(m.get_param_vector())
+    print((m.get_param_vector()))
     del m, ls, l, alg
 
 

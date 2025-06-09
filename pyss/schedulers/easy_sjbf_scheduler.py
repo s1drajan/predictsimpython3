@@ -1,5 +1,5 @@
-from common import Scheduler, CpuSnapshot, list_copy
-from easy_prediction_backfill_scheduler import EasyPredictionBackfillScheduler
+from .common import Scheduler, CpuSnapshot, list_copy
+from .easy_prediction_backfill_scheduler import EasyPredictionBackfillScheduler
 
 # shortest job first 
 sjf_sort_key = (

@@ -26,14 +26,14 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 
-from docopt import docopt
+from .docopt import docopt
 import datetime as dt
 import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import progressbar
-from usage_tracker import UsageTracker
+from .usage_tracker import UsageTracker
 
 header = [
     'job_id',
@@ -59,11 +59,11 @@ header = [
 
 def main_proc(in_file, interval='48h'):
     df = pd.read_csv(in_file, sep='\s+', comment=';', header=None, names=header)
-    print(df.head())
+    print((df.head()))
 
     bsld = np.maximum((df['Wait Time'] + df['Run Time']) / np.maximum(df['Run Time'], 10), 1)
     avebsld = np.average(bsld)
-    print ("AVEbsld: {}".format(avebsld))
+    print(("AVEbsld: {}".format(avebsld)))
 
     # create profile
     ut_queue = UsageTracker(0)
@@ -116,8 +116,8 @@ def main_proc(in_file, interval='48h'):
 
 
 def plot_util(d, interval, label, color1='gray', color2='red'):
-    x = [x for x in d.keys()]
-    y = [y for y in d.values()]
+    x = [x for x in list(d.keys())]
+    y = [y for y in list(d.values())]
     # df = pd.DataFrame({'x': x, 'y': y}, index=pd.to_datetime(x, unit='s'))
     # df['diff'] = df['x'].diff()
     # df['w*y'] = df['diff'] * df['y']

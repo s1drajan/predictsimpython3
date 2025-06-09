@@ -3,45 +3,45 @@
 import unittest
 import os
 
-from simulator import run_simulator
+from .simulator import run_simulator
 from base.prototype import Job
 
-from fcfs_scheduler import FcfsScheduler
+from .fcfs_scheduler import FcfsScheduler
 
-from conservative_scheduler import ConservativeScheduler
-from double_conservative_scheduler import DoubleConservativeScheduler
+from .conservative_scheduler import ConservativeScheduler
+from .double_conservative_scheduler import DoubleConservativeScheduler
 
-from easy_backfill_scheduler import EasyBackfillScheduler
+from .easy_backfill_scheduler import EasyBackfillScheduler
 
-from double_easy_backfill_scheduler import DoubleEasyBackfillScheduler
-from head_double_easy_scheduler import HeadDoubleEasyScheduler
-from tail_double_easy_scheduler import TailDoubleEasyScheduler
-from shrinking_easy_scheduler import ShrinkingEasyScheduler
+from .double_easy_backfill_scheduler import DoubleEasyBackfillScheduler
+from .head_double_easy_scheduler import HeadDoubleEasyScheduler
+from .tail_double_easy_scheduler import TailDoubleEasyScheduler
+from .shrinking_easy_scheduler import ShrinkingEasyScheduler
 
-from easy_sjbf_scheduler import EasySjbfScheduler
-from reverse_easy_scheduler import ReverseEasyScheduler
+from .easy_sjbf_scheduler import EasySjbfScheduler
+from .reverse_easy_scheduler import ReverseEasyScheduler
 
-from maui_scheduler import MauiScheduler, Weights
-from greedy_easy_backfill_scheduler import GreedyEasyBackfillScheduler
-from lookahead_easy_backfill_scheduler import LookAheadEasyBackFillScheduler
+from .maui_scheduler import MauiScheduler, Weights
+from .greedy_easy_backfill_scheduler import GreedyEasyBackfillScheduler
+from .lookahead_easy_backfill_scheduler import LookAheadEasyBackFillScheduler
 
-from easy_plus_plus_scheduler import EasyPlusPlusScheduler
-from common_dist_easy_plus_plus_scheduler import CommonDistEasyPlusPlusScheduler
+from .easy_plus_plus_scheduler import EasyPlusPlusScheduler
+from .common_dist_easy_plus_plus_scheduler import CommonDistEasyPlusPlusScheduler
 
-from orig_probabilistic_easy_scheduler import OrigProbabilisticEasyScheduler
+from .orig_probabilistic_easy_scheduler import OrigProbabilisticEasyScheduler
 # from probabilistic_nodes_easy_scheduler import ProbabilisticNodesEasyScheduler
 # from probabilistic_alpha_easy_scheduler import ProbabilisticAlphaEasyScheduler
 # from probabilistic_linear_scale_easy_scheduler import ProbabilisticLinearScaleEasyScheduler
 # from shrinking_alpha_easy_scheduler import ShrinkingAlphaEasyScheduler
 
-from alpha_easy_scheduler import AlphaEasyScheduler
+from .alpha_easy_scheduler import AlphaEasyScheduler
 # from alpha_easy_plus_plus_scheduler import AlphaEasyPlusPlusScheduler
 
 
-from perfect_easy_backfill_scheduler import PerfectEasyBackfillScheduler
-from double_perfect_easy_backfill_scheduler import DoublePerfectEasyBackfillScheduler
+from .perfect_easy_backfill_scheduler import PerfectEasyBackfillScheduler
+from .double_perfect_easy_backfill_scheduler import DoublePerfectEasyBackfillScheduler
 
-from easy_prediction_backfill_scheduler import EasyPredictionBackfillScheduler
+from .easy_prediction_backfill_scheduler import EasyPredictionBackfillScheduler
 
 from base.prototype import _job_inputs_to_jobs
 from base.workload_parser import parse_lines

@@ -40,16 +40,16 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 
-from __future__ import division
+
 
 import os.path
 
-from base.docopt import docopt
+from .base.docopt import docopt
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-from base.prototype import Job
+from .base.prototype import Job
 
 header = [
     'job_id',
@@ -82,7 +82,7 @@ header = [
 #     }
 # }
 
-from predictors.predictor_top_percent import PredictorTopPercent as Predictor
+from .predictors.predictor_top_percent import PredictorTopPercent as Predictor
 
 options1 = {
     'scheduler':{

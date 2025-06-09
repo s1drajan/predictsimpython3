@@ -36,7 +36,7 @@ class Scheduler(object):
         my_module = options["scheduler"]["predictor"]["name"]
 
         my_class = module_to_class(my_module)
-        package = __import__('predictors', fromlist=[my_module])
+        package = __import__('pyss.predictors', fromlist=[my_module])
         if my_module not in package.__dict__:
             raise Exception("No such predictor (module '" + my_module + "' file not found).")
         if my_class not in package.__dict__[my_module].__dict__:
@@ -508,11 +508,11 @@ class CpuSnapshot(object):
             prev_time = time
 
             if s.free_processors < 0 or s.free_processors > self.total_processors:
-                print(">>> PROBLEM: number of free processors is either negative or huge", s)
+                print((">>> PROBLEM: number of free processors is either negative or huge", s))
                 return False
 
             if s.start_time != prev_time + prev_duration:
-                print(">>> PROBLEM: non successive slices", s.start_time, prev_time)
+                print((">>> PROBLEM: non successive slices", s.start_time, prev_time))
                 return False
 
             duration = s.duration
@@ -531,11 +531,11 @@ class CpuSnapshot(object):
             prev_time = time
 
             if s.free_processors != self.total_processors:
-                print(">>> PROBLEM: number of free processors is not the total processors", s)
+                print((">>> PROBLEM: number of free processors is not the total processors", s))
                 return False
 
             if s.start_time != prev_time + prev_duration:
-                print(">>> PROBLEM: non successive slices", s.start_time, prev_time)
+                print((">>> PROBLEM: non successive slices", s.start_time, prev_time))
                 return False
 
             duration = s.duration

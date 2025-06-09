@@ -33,7 +33,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 import progressbar
-from usage_tracker import UsageTracker
+from .usage_tracker import UsageTracker
 
 header = [
     'job_id', 'Submit Time', 'Wait Time', 'Run Time',
@@ -53,7 +53,7 @@ def write_profile_to_file(profile, timestamps, out_file):
 
 def calculate_queue_length(in_file):
   df = pd.read_csv(in_file, sep='\s+', comment=';', header=None, names=header)
-  print(df.head())
+  print((df.head()))
 
 
   df["Start Time"] = df["Submit Time"] + df["Wait Time"]

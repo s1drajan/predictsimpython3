@@ -20,7 +20,7 @@
 
 '''Default ProgressBar widgets'''
 
-from __future__ import division
+
 
 import datetime
 import math
@@ -203,7 +203,7 @@ class FormatLabel(Timer):
 
     def update(self, pbar):
         context = {}
-        for name, (key, transform) in self.mapping.items():
+        for name, (key, transform) in list(self.mapping.items()):
             try:
                 value = getattr(pbar, key)
 

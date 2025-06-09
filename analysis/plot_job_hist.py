@@ -93,7 +93,7 @@ def plot_dist(x_name, y_name, df, ax, title, scale='log'):
 def plot_job_hist(filename, ax):
   # read swf file
   df = pd.read_csv(filename, sep='\s+', header=None, names=col_names, comment=';')
-  print(df.head())
+  print((df.head()))
   plot_dist('Run Time', 'Requested Number of Processors', df, ax, os.path.basename(filename))
 
 

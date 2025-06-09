@@ -5,7 +5,7 @@ Created by Alexander Goponenko at 9/7/2021
 
 NOTE: "nodes" and "processors" are treated as they are a same thing
 '''
-from __future__ import division
+
 
 from sortedcontainers import SortedSet
 from ortools.sat.python import cp_model
@@ -29,8 +29,8 @@ class SolutionPrinter(cp_model.CpSolverSolutionCallback):
 
   def on_solution_callback(self):
     """Called at each new solution."""
-    print('Solution %i, time = %f s, objective = %i' %
-          (self.__solution_count, self.WallTime(), self.ObjectiveValue()))
+    print(('Solution %i, time = %f s, objective = %i' %
+          (self.__solution_count, self.WallTime(), self.ObjectiveValue())))
     self.__solution_count += 1
 
 
@@ -224,7 +224,7 @@ class ConstrProgScheduler(Scheduler):
     # AWF
     # AWF = [nodes*job.predicted_run_time * (time - job.submit_time + interval.SafeEndExpr(max_makespan)) for job, interval, nodes in queued_job_dict.values()]
     AWF = [nodes*job.predicted_run_time * (time - job.submit_time + end_var)
-           for job, interval, nodes, start_var, end_var in queued_job_dict.values()]
+           for job, interval, nodes, start_var, end_var in list(queued_job_dict.values())]
     objective_var = sum(AWF)
 
 
@@ -232,8 +232,8 @@ class ConstrProgScheduler(Scheduler):
     # M_job = n * (F ** (p + 1) - Tw ** (p + 1))
     M1 = []
     M2 = []
-    print("max_span: {}".format(max_makespan))
-    for job, interval, nodes, start_var, end_var in queued_job_dict.values():
+    print(("max_span: {}".format(max_makespan)))
+    for job, interval, nodes, start_var, end_var in list(queued_job_dict.values()):
       Tw = time + start_var - job.submit_time
       F = time + end_var - job.submit_time
       # M1.append(nodes * (F*F - Tw*Tw))
@@ -255,13 +255,13 @@ class ConstrProgScheduler(Scheduler):
     #
     # limit = solver.TimeLimit(self.timelimit)
 
-    print("Solution found: {}.".format(status))
-    print("Objective function: {}".format(solver.ObjectiveValue()))
+    print(("Solution found: {}.".format(status)))
+    print(("Objective function: {}".format(solver.ObjectiveValue())))
     #
     #
     # sorting results according to the priorities
     # TODO: make it an configuration parameter
-    sorted_dict_values = sorted(queued_job_dict.values(), key=lambda x: x[0].submit_time)
+    sorted_dict_values = sorted(list(queued_job_dict.values()), key=lambda x: x[0].submit_time)
     result = []
     if return_plan:
       for job, interval, _, start_var, end_var in sorted_dict_values :

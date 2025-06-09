@@ -1,4 +1,4 @@
-from common import CpuSnapshot
+from .common import CpuSnapshot
 
 class Weights(object):
     # this class defines the configuration of weights for the MAUI
@@ -16,7 +16,7 @@ class Weights(object):
 # degree of freedom: maui may consider the jobs not necessarily by order of
 # submission, as opposed to the easy backfill.
 
-from easy_backfill_scheduler import EasyBackfillScheduler
+from .easy_backfill_scheduler import EasyBackfillScheduler
 
 class MauiScheduler(EasyBackfillScheduler):
     def __init__(self, options, weights_list=None, weights_backfill=None):
@@ -91,5 +91,5 @@ class MauiScheduler(EasyBackfillScheduler):
 
     def print_waiting_list(self):
         for job in self.unscheduled_jobs:
-            print job, "bypassed:", job.maui_bypass_counter
-        print
+            print(job, "bypassed:", job.maui_bypass_counter)
+        print()

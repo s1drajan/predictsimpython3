@@ -5,7 +5,7 @@ Created by Alexander Goponenko at 9/7/2021
 
 NOTE: "nodes" and "processors" are treated as they are a same thing
 """
-from __future__ import division
+
 
 import csv
 import os
@@ -36,7 +36,7 @@ class Peekable:
     self.iter = iter(iterable)
     self.next_value = next(self.iter, None)
   
-  def next(self):
+  def __next__(self):
     if self.next_value is None:
       return None
     else:
@@ -102,7 +102,7 @@ class CplexTunedScheduler(Scheduler):
           self.rewinding_checkpoint = True
         print("Rewinding initialized")
       except Exception as e:
-        print("Rewinding not done: " + str(e))
+        print(("Rewinding not done: " + str(e)))
         self.rewinding_checkpoint = False
       try:
         os.remove(self.checkpointing_file)
@@ -201,13 +201,13 @@ class CplexTunedScheduler(Scheduler):
     try:
       if self.use_checkpointing and self.rewinding_checkpoint and not return_plan:
         if self.checkpointing_peekable.peek() is None:
-          print("stopped rewinding at time {}".format(time))
+          print(("stopped rewinding at time {}".format(time)))
           self._stop_rewinding()
         elif self.checkpointing_peekable.peek()[0] < time:
           # discrepancy
-          print("While rewinding checkpointing: job {} should start at {} but we are already at {}: aborting rewinding".format(
+          print(("While rewinding checkpointing: job {} should start at {} but we are already at {}: aborting rewinding".format(
                 self.checkpointing_peekable.peek()[1], self.checkpointing_peekable.peek()[0], time
-          ))
+          )))
           self._stop_rewinding()
         else:
           result = []
@@ -224,13 +224,13 @@ class CplexTunedScheduler(Scheduler):
                 break
             if not found: 
               raise Exception("job id {} is not in the list of pending jobs".format(job_id))
-            print("rewinding job {} at time {}".format(job_id, time))
-            self.checkpointing_peekable.next()
+            print(("rewinding job {} at time {}".format(job_id, time)))
+            next(self.checkpointing_peekable)
           return result
     except Exception as e:
-      print("While rewinding checkpointing: exception \"{}\": aborting rewinding".format(
+      print(("While rewinding checkpointing: exception \"{}\": aborting rewinding".format(
                 str(e)
-          ))
+          )))
       self._stop_rewinding()
     # we get here only if we are not rewinding checkpointing
     queue = self.jobs.get_pending_jobs_list()
@@ -275,8 +275,8 @@ class CplexTunedScheduler(Scheduler):
         return self._cp_scheduling_attempt(queue, return_plan, time, timelimit, verbosity)
       except Exception as e:
         print("==========================================================================================")
-        print("Exception during scheduling at time {}".format(time))
-        print(traceback.format_exc())
+        print(("Exception during scheduling at time {}".format(time)))
+        print((traceback.format_exc()))
         print("==========================================================================================")
         if type(e) is SchedulingException:
           raise e
@@ -297,8 +297,8 @@ class CplexTunedScheduler(Scheduler):
     resource_list = []
     if in_debug:
       print("========================================================================================")
-      print("Scheduling at time {}".format(time))
-      print("{} running jobs and {} waiting jobs".format(len(self.jobs.get_running_jobs()), len(queue)))
+      print(("Scheduling at time {}".format(time)))
+      print(("{} running jobs and {} waiting jobs".format(len(self.jobs.get_running_jobs()), len(queue))))
     # process running jobs
     for job in self.jobs.get_running_jobs():
       assert job.predicted_finish_time >= time
@@ -347,17 +347,17 @@ class CplexTunedScheduler(Scheduler):
     if self.objective_function == 'AWF':
       # AWF
       AWF = [nodes * job.predicted_run_time * (time - job.submit_time + dcpm.end_of(interval))
-               for job, interval, nodes in queued_job_dict.values()]
+               for job, interval, nodes in list(queued_job_dict.values())]
       objective_var = dcpm.sum(AWF)
     elif self.objective_function == 'AF':
       AF = [time - job.submit_time + dcpm.end_of(interval) for job, interval, nodes in
-             queued_job_dict.values()]
+             list(queued_job_dict.values())]
       objective_var = dcpm.sum(AF)
     elif self.objective_function == 'BSLD':
       BSLD = [dcpm.max(1,
                   (time - job.submit_time + dcpm.end_of(interval)) / float(max(self.BSLD_bound,job.predicted_run_time))
                  )
-              for job, interval, nodes in queued_job_dict.values()]
+              for job, interval, nodes in list(queued_job_dict.values())]
       objective_var = dcpm.sum(BSLD)
     else: # self.objective_function == 'ASpWAS'
       # ASpWAS
@@ -365,7 +365,7 @@ class CplexTunedScheduler(Scheduler):
       # M1 = []
       M2 = []
       M3 = []
-      for job, interval, nodes in queued_job_dict.values():
+      for job, interval, nodes in list(queued_job_dict.values()):
         Tw = float(time) + dcpm.start_of(interval) - float(job.submit_time)
         # F = float(time) + dcpm.end_of(interval) - float(job.submit_time)
         F = Tw + float(job.predicted_run_time)
@@ -384,7 +384,7 @@ class CplexTunedScheduler(Scheduler):
     # print(res)
     # sorting results according to the priorities
     # TODO: make it an configuration parameter
-    sorted_dict_values = sorted(queued_job_dict.values(), key=lambda x: x[0].submit_time)
+    sorted_dict_values = sorted(list(queued_job_dict.values()), key=lambda x: x[0].submit_time)
     result = []
     if return_plan:
       for job, interval, _ in sorted_dict_values:

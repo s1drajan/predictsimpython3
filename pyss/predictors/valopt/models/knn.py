@@ -1,4 +1,4 @@
-import VP_tree
+from . import VP_tree
 
 class KNN:
     def __init__(self,dist,mapper,weight,k):

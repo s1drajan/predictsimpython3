@@ -20,9 +20,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 See details in the class documentation.
 """
-from __future__ import division
+
 from sortedcontainers import SortedDict
-from predictor import Predictor
+from .predictor import Predictor
 
 
 class PredictorConditionalPercent(Predictor):
@@ -121,8 +121,8 @@ class Record(object):
             predicted value (running time) or None if we can't predict (caller should use default)
 
         """
-        times = self.dict.keys()
-        weights = self.dict.values()
+        times = list(self.dict.keys())
+        weights = list(self.dict.values())
         last_index = len(self.dict) - 1
         # find first point above time_already_running
         cur_index = self.dict.bisect_right(time_already_running)

@@ -138,7 +138,7 @@ class PrinterBackend(Backend):
 
     def append(self, data):
         """Print *data* to stdout."""
-        print(self._prefix + str(data))
+        print((self._prefix + str(data)))
 
 
 # class H5pyBackend(Backend):

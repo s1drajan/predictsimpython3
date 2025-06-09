@@ -1,4 +1,4 @@
-from easy_plus_plus_scheduler import EasyPlusPlusScheduler
+from .easy_plus_plus_scheduler import EasyPlusPlusScheduler
 from base.prototype import JobStartEvent
 
 class  AlphaEasyScheduler(EasyPlusPlusScheduler):
@@ -12,7 +12,7 @@ class  AlphaEasyScheduler(EasyPlusPlusScheduler):
 	self.user_jobs = {}
     
     def new_events_on_job_submission(self, job, current_time):
-        if not self.user_jobs.has_key(job.user_id): 
+        if job.user_id not in self.user_jobs: 
             self.user_jobs[job.user_id] = []
             
         self.cpu_snapshot.archive_old_slices(current_time)

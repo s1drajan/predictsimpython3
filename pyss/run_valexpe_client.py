@@ -13,7 +13,7 @@ import json
 
 import sys
 import os.path
-from run_simulator import parse_and_run_simulator
+from .run_simulator import parse_and_run_simulator
 import pprint
 import random
 
@@ -29,7 +29,7 @@ env.use_ssh_config = True
 
 
 if len(sys.argv) != 3:
-	print "pypy -OO client.py serverhost num_thread"
+	print("pypy -OO client.py serverhost num_thread")
 	exit(1)
 
 
@@ -96,7 +96,7 @@ def get_expe():
 		return ("None","None","None","None")
 	(a,hash,a,state,a,doer,a,options,a) = res.split("'")
 	options = json.loads(options)
-	print (hash,state,doer,options)
+	print((hash,state,doer,options))
 	return (hash,state,doer,options)
 
 
@@ -132,22 +132,22 @@ def launchExpe(options, worker_id):
 		myid = expe_counter.value
 	
 	#if not ( os.path.isfile(options["output_swf"]) ):
-	print bcolors.WARNING+"Start expe "+str(myid)+" on w"+str(worker_id)+ bcolors.ENDC+" : "+str(options)
+	print(bcolors.WARNING+"Start expe "+str(myid)+" on w"+str(worker_id)+ bcolors.ENDC+" : "+str(options))
 	error = False
 	tempout = sys.stdout
 	sys.stdout = open(options["output_swf"]+".out", 'w')
 	sys.stderr = sys.stdout
 	try:
 		parse_and_run_simulator(options)
-	except Exception,e:
-		print "Exception: "+str(e)
+	except Exception as e:
+		print("Exception: "+str(e))
 		error = str(e)
 	sys.stdout = tempout
 	if not error:
-		print bcolors.OKBLUE+"End   epxe "+str(myid)+ bcolors.ENDC
+		print(bcolors.OKBLUE+"End   epxe "+str(myid)+ bcolors.ENDC)
 		return True
 	else:
-		print bcolors.FAIL+"ERROR on "+str(myid)+": "+str(e)+ bcolors.ENDC
+		print(bcolors.FAIL+"ERROR on "+str(myid)+": "+str(e)+ bcolors.ENDC)
 		return False
 	#else:
 		#print bcolors.OKGREEN+"Already done"+str(myid)+ bcolors.ENDC+" : "+str(options)
@@ -159,14 +159,14 @@ def worker():
 	with thread_counter.get_lock():
 		thread_counter.value += 1
 		worker_id = thread_counter.value
-		print "Start Worker: ", worker_id
+		print("Start Worker: ", worker_id)
 	try:
 		while True:
 			#get a new expe
 			(hash,state,doer,options) = get_expe()
 			
 			if hash == "None":
-				print "No more expe for", worker_id
+				print("No more expe for", worker_id)
 				return
 			
 			#exec it
@@ -187,7 +187,7 @@ def worker():
 
 
 def useless_task():
-	print run("hostname")
+	print(run("hostname"))
 
 #we run first a useless task to open the connection
 #execute(useless_task)

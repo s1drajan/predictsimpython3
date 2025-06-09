@@ -1,4 +1,4 @@
-from orig_probabilistic_easy_scheduler import OrigProbabilisticEasyScheduler
+from .orig_probabilistic_easy_scheduler import OrigProbabilisticEasyScheduler
 
     
 class  OrigCommonDistProbabilisticEasyScheduler(OrigProbabilisticEasyScheduler):

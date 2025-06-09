@@ -323,7 +323,7 @@ def test_container_get_queued(env):
     def proc(env, wait, container, what):
         yield env.timeout(wait)
         with getattr(container, what)(1) as req:
-            print(env.now, what, container.level)
+            print((env.now, what, container.level))
             yield req
 
     container = simpy.Container(env, 1)

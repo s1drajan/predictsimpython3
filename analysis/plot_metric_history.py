@@ -25,7 +25,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 
-from __future__ import division
+
 
 import sys
 import glob
@@ -297,7 +297,7 @@ def calculate_metric_history(in_file, metric_funciton):
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print ("Usage: {} <input_folder> <metric>".format(os.path.basename(__file__)))
+        print(("Usage: {} <input_folder> <metric>".format(os.path.basename(__file__))))
     input_dir = sys.argv[1]
     metric_name = sys.argv[2]
     m_dic = {x[0]: x[1] for x in metrics}
@@ -308,7 +308,7 @@ if __name__ == "__main__":
     print (input_files)
     fig_dic = {}
     for file in input_files:
-        print("analyzing {}".format(os.path.basename(file)))
+        print(("analyzing {}".format(os.path.basename(file))))
         data, config = os.path.basename(file).split('___')
         if data in fig_dic:
             fig, ax = fig_dic[data]
@@ -320,7 +320,7 @@ if __name__ == "__main__":
         res = calculate_metric_history(file, metric_f)
         ax.plot(res[0], res[1], label=config)
 
-    for data in fig_dic.keys():
+    for data in list(fig_dic.keys()):
         fig, ax = fig_dic[data]
         ax.set_title("{} for {}".format(metric_name, data))
         ax.legend()

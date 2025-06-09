@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 NOTE: "nodes" and "processors" are treated as they are a same thing
 '''
-from __future__ import division
+
 
 from sortedcontainers import SortedSet
 import docplex.cp.model as dcpm

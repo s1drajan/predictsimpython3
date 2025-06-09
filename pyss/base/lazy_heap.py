@@ -1,5 +1,5 @@
 import heapq
-import simple_heap
+from . import simple_heap
 class Heap(simple_heap.Heap):
     """
     Like the simple heap, but append instead of heappush on push (constant

@@ -24,7 +24,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 
-from __future__ import division
+
 
 import os.path
 
@@ -128,7 +128,7 @@ def color_to_zorder(color):
   g = int(color[3:5], 16) / 256
   b = int(color[5:7], 16) / 256
   brightness = (r * 299 + g * 587 + b * 114)
-  print("Brightness: ", brightness)
+  print(("Brightness: ", brightness))
   return 1000 - brightness
 
 
@@ -139,7 +139,7 @@ def plot_metric_fig(df, metric, order_metric, save=None, legend=True, bbox_to_an
   x = np.arange(len(workloads), dtype=float)
   width = 1 / (len(order) - width_adjust[order_metric] + 1)
   shift = -width * width_adjust[order_metric]
-  print (df.head())
+  print((df.head()))
   matplotlib.rc('text', usetex=True)
   matplotlib.rc(
       'text.latex',
@@ -153,7 +153,7 @@ def plot_metric_fig(df, metric, order_metric, save=None, legend=True, bbox_to_an
 
   fig, ax = plt.subplots(1, 1, figsize=(8, 4))
   for alg in order:
-    print("Processing ", alg)
+    print(("Processing ", alg))
     alg_df = df[df['scheduler'] == alg]
     m_df = alg_df[alg_df['metric'] == metric]
     y = [m_df[wl].iloc[0] for wl in workloads]

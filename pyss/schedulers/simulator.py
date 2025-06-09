@@ -52,13 +52,17 @@ class Simulator(object):
         if (output_swf != None):
             if (output_swf[-3:] == ".gz"):
                 import gzip
-                self.output_swf = gzip.open(output_swf, 'w+')
+                self.output_swf = gzip.open(output_swf, 'wt', encoding='utf-8')
+
             else:
-                self.output_swf = open(output_swf, 'w+')
+                self.output_swf = open(output_swf, 'w', encoding='utf-8')
+
             version = subprocess.Popen("git show -s --format=\"%h %ci\" HEAD",
-                               cwd=os.path.dirname(os.path.realpath(__file__)),
-                               shell=True, stdout=subprocess.PIPE
-                              ).stdout.read().strip()
+                                    cwd=os.path.dirname(os.path.realpath(__file__)),
+                                    shell=True, stdout=subprocess.PIPE
+                                    ).stdout.read().decode('utf-8').strip()
+
+
             self.output_swf.write("; Computer: Pyss Simulator (" + version + ")\n")
             self.output_swf.write("; Preemption: No\n")
             self.output_swf.write("; MaxNodes: -1\n")
@@ -229,7 +233,7 @@ def run_simulator(num_processors, jobs, scheduler, output_swf, input_file, no_st
         try:
             os.remove(simulator.pfile_name)
         except:
-            print("Could not delete {}".format(simulator.pfile_name))
+            print(("Could not delete {}".format(simulator.pfile_name)))
     if (not no_stats):
         print_simulator_stats(simulator)
     return simulator
@@ -312,26 +316,26 @@ def print_statistics(jobs, time_of_last_job_submission):
         if percentile_counter < (0.9 * counter):
             break
 
-    print
-    print "STATISTICS: "
+    print()
+    print("STATISTICS: ")
 
-    print "Wait (Tw) [minutes]: ", float(sum_waits) / (60 * max(counter, 1))
+    print("Wait (Tw) [minutes]: ", float(sum_waits) / (60 * max(counter, 1)))
 
-    print "Response time (Tw+Tr) [minutes]: ", float(sum_waits + sum_run_times) / (60 * max(counter, 1))
+    print("Response time (Tw+Tr) [minutes]: ", float(sum_waits + sum_run_times) / (60 * max(counter, 1)))
 
-    print "Slowdown (Tw+Tr) / Tr: ", sum_slowdowns / max(counter, 1)
+    print("Slowdown (Tw+Tr) / Tr: ", sum_slowdowns / max(counter, 1))
 
-    print "Bounded slowdown max(1, (Tw+Tr) / max(10, Tr): ", sum_bounded_slowdowns / max(counter, 1)
+    print("Bounded slowdown max(1, (Tw+Tr) / max(10, Tr): ", sum_bounded_slowdowns / max(counter, 1))
 
-    print "Estimated slowdown (Tw+Tr) / Te: ", sum_estimated_slowdowns / max(counter, 1)
+    print("Estimated slowdown (Tw+Tr) / Te: ", sum_estimated_slowdowns / max(counter, 1))
 
-    print "Tail slowdown (if bounded_sld >= 3): ", sum_tail_slowdowns / max(tail_counter, 1)
-    print "   Number of jobs in the tail: ", tail_counter
+    print("Tail slowdown (if bounded_sld >= 3): ", sum_tail_slowdowns / max(tail_counter, 1))
+    print("   Number of jobs in the tail: ", tail_counter)
 
-    print "Tail Percentile (the top 10% sld): ", sum_percentile_tail_slowdowns / max(counter - percentile_counter + 1,
-                                                                                     1)
+    print("Tail Percentile (the top 10% sld): ", sum_percentile_tail_slowdowns / max(counter - percentile_counter + 1,
+                                                                                     1))
 
-    print "Total Number of jobs: ", size
+    print("Total Number of jobs: ", size)
 
-    print "Number of jobs used to calculate statistics: ", counter
-    print
+    print("Number of jobs used to calculate statistics: ", counter)
+    print()

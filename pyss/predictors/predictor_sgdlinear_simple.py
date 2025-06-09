@@ -1,7 +1,7 @@
-from predictor import Predictor
+from .predictor import Predictor
 import numpy as np
-from valopt.models.linear_model import LinearModel
-from valopt.algos.nag import NAG
+from .valopt.models.linear_model import LinearModel
+from .valopt.algos.nag import NAG
 
 class PredictorSgdlinearSimple(Predictor):
     #Internal info
@@ -18,18 +18,18 @@ class PredictorSgdlinearSimple(Predictor):
         m=LinearModel(self.n_features)
 
         if options["loss"]=="squaredloss":
-            from valopt.losses.squared_loss import SquaredLoss
+            from .valopt.losses.squared_loss import SquaredLoss
             l=SquaredLoss(m)
         elif options["loss"]=="absloss":
-            from valopt.losses.abs_loss import AbsLoss
+            from .valopt.losses.abs_loss import AbsLoss
             l=AbsLoss(m)
         elif options["loss"]=="weightedsquaredloss":
-            from valopt.losses.weighted_squared_loss import WeightedSquaredLoss
+            from .valopt.losses.weighted_squared_loss import WeightedSquaredLoss
             l=WeightedSquaredLoss(m)
         else:
             raise ValueError("predictor config error: no valid loss specified.")
 
-        if "max_runtime" in options.keys():
+        if "max_runtime" in list(options.keys()):
             self.max_runtime=options["max_runtime"]
         else:
             self.max_runtime=False
@@ -43,11 +43,11 @@ class PredictorSgdlinearSimple(Predictor):
         x=np.empty(self.n_features,dtype=np.float32)
 
         #checks on user internal memory
-        if not self.user_job_last1.has_key(job.user_id):
+        if job.user_id not in self.user_job_last1:
             self.user_job_last1[job.user_id] = None
-        if not self.user_job_last2.has_key(job.user_id):
+        if job.user_id not in self.user_job_last2:
             self.user_job_last2[job.user_id] = None
-        if not self.user_job_last3.has_key(job.user_id):
+        if job.user_id not in self.user_job_last3:
             self.user_job_last3[job.user_id] = None
 
         #TODO:make x
@@ -88,7 +88,7 @@ class PredictorSgdlinearSimple(Predictor):
 
     def store_x(self,job,x):
         """store x for a given job if its not already stored"""
-        if job not in self.job_x.keys():
+        if job not in list(self.job_x.keys()):
             self.job_x[job]=x
 
     def pop_x(self, job):
@@ -123,9 +123,9 @@ class PredictorSgdlinearSimple(Predictor):
 
         #updating our data
         #store user previous run time history
-        assert self.user_job_last1.has_key(job.user_id) == True
-        assert self.user_job_last2.has_key(job.user_id) == True
-        assert self.user_job_last3.has_key(job.user_id) == True
+        assert (job.user_id in self.user_job_last1) == True
+        assert (job.user_id in self.user_job_last2) == True
+        assert (job.user_id in self.user_job_last3) == True
         self.user_job_last3[job.user_id] = self.user_job_last2[job.user_id]
         self.user_job_last2[job.user_id] = self.user_job_last1[job.user_id]
         self.user_job_last1[job.user_id] = job

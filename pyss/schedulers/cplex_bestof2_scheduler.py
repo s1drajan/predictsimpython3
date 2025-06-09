@@ -5,7 +5,7 @@ Created by Alexander Goponenko at 9/5/2023
 
 NOTE: "nodes" and "processors" are treated as they are a same thing
 """
-from __future__ import division
+
 
 import csv
 import os
@@ -37,7 +37,7 @@ class Peekable:
     self.iter = iter(iterable)
     self.next_value = next(self.iter, None)
   
-  def next(self):
+  def __next__(self):
     if self.next_value is None:
       return None
     else:
@@ -195,12 +195,12 @@ class CplexBestof2Scheduler(Scheduler):
       if self.use_checkpointing and self.rewinding_checkpoint and not return_plan:
         if self.checkpointing_peekable.peek() is None:
           self.rewinding_checkpoint = False
-          print("stopped rewinding at time {}".format(time))
+          print(("stopped rewinding at time {}".format(time)))
         elif self.checkpointing_peekable.peek()[0] < time:
           # discrepancy
-          print("While rewinding checkpointing: job {} should start at {} but we are already at {}: aborting rewinding".format(
+          print(("While rewinding checkpointing: job {} should start at {} but we are already at {}: aborting rewinding".format(
                 self.checkpointing_peekable.peek()[1], self.checkpointing_peekable.peek()[0], time
-          ))
+          )))
           self.rewinding_checkpoint = False
         else:
           result = []
@@ -217,13 +217,13 @@ class CplexBestof2Scheduler(Scheduler):
                 break
             if not found: 
               raise Exception("job id {} is not in the list of pending jobs".format(job_id))
-            print("rewinding job {} at time {}".format(job_id, time))
-            self.checkpointing_peekable.next()
+            print(("rewinding job {} at time {}".format(job_id, time)))
+            next(self.checkpointing_peekable)
           return result
     except Exception as e:
-      print("While rewinding checkpointing: exception \"{}\": aborting rewinding".format(
+      print(("While rewinding checkpointing: exception \"{}\": aborting rewinding".format(
                 str(e)
-          ))
+          )))
       self.rewinding_checkpoint = False
     # we get here only if we are not rewinding checkpointing
     queue = self.jobs.get_pending_jobs_list()
@@ -273,22 +273,22 @@ class CplexBestof2Scheduler(Scheduler):
     # choose the best
     if not alt_plan:
       # we have nothing to choose from
-      print("WARNING: no alternative solution at time {}".format(time))
+      print(("WARNING: no alternative solution at time {}".format(time)))
       plan = cp_plan
     else:
       # improve on the alternative plan
       alt_cp_plan = self._cp_scheduling_plan(queue, time, alt_plan)
       if alt_cp_plan:
         if self._measure_quality(alt_plan) < self._measure_quality(alt_cp_plan):
-          print("Warning: on time {}, the optimization of the alternative plan degraded from {} to {}".format(time, self._measure_quality(alt_plan), self._measure_quality(alt_cp_plan)))
+          print(("Warning: on time {}, the optimization of the alternative plan degraded from {} to {}".format(time, self._measure_quality(alt_plan), self._measure_quality(alt_cp_plan))))
         else:
           alt_plan = alt_cp_plan
       else:
-          print("WARNING: failed to improve the alternative solution at time {}".format(time))
+          print(("WARNING: failed to improve the alternative solution at time {}".format(time)))
       if not cp_plan or self._measure_quality(alt_plan) < self._measure_quality(cp_plan):
         alt_q = self._measure_quality(alt_plan)
         diff = (self._measure_quality(cp_plan) - alt_q) * 100.0 / alt_q if cp_plan else "millions"
-        print("INFO: alternative solution was better at time {} by {}%".format(time, diff))
+        print(("INFO: alternative solution was better at time {} by {}%".format(time, diff)))
         plan = alt_plan
       else:
         plan = cp_plan
@@ -336,8 +336,8 @@ class CplexBestof2Scheduler(Scheduler):
         return self._cp_scheduling_attempt(queue, time, timelimit, verbosity, initial_plan)
       except Exception as e:
         print("==========================================================================================")
-        print("Exception during scheduling at time {}".format(time))
-        print(traceback.format_exc())
+        print(("Exception during scheduling at time {}".format(time)))
+        print((traceback.format_exc()))
         print("==========================================================================================")
         if type(e) is SchedulingException:
           raise e
@@ -357,8 +357,8 @@ class CplexBestof2Scheduler(Scheduler):
     resource_list = []
     if in_debug:
       print("========================================================================================")
-      print("Scheduling at time {}".format(time))
-      print("{} running jobs and {} waiting jobs".format(len(self.jobs.get_running_jobs()), len(queue)))
+      print(("Scheduling at time {}".format(time)))
+      print(("{} running jobs and {} waiting jobs".format(len(self.jobs.get_running_jobs()), len(queue))))
     # process running jobs
     for job in self.jobs.get_running_jobs():
       assert job.predicted_finish_time >= time
@@ -367,7 +367,7 @@ class CplexBestof2Scheduler(Scheduler):
       #                                                                       job.predicted_finish_time))
       # The duration must be > 1, since ORTools doesn't accept duration 0.
       if in_debug and job.predicted_finish_time - time < 1:
-        print("adjusting finish time for job {} from {} to {}".format(job.id, job.predicted_finish_time, time+1))
+        print(("adjusting finish time for job {} from {} to {}".format(job.id, job.predicted_finish_time, time+1)))
       remaining_duration = max(1, job.predicted_finish_time - time)
       max_makespan = max(max_makespan, remaining_duration)
       # interval = dcpm.interval_var(start=0, size=remaining_duration, optional=False, name='R{}'.format(job.id))
@@ -384,7 +384,7 @@ class CplexBestof2Scheduler(Scheduler):
     # process queued jobs
     for job in sorted_queue:
       if in_debug and job.predicted_run_time < 1:
-        print("adjusting run_time for job {} from {} to {}".format(job.id, job.predicted_run_time, 1))
+        print(("adjusting run_time for job {} from {} to {}".format(job.id, job.predicted_run_time, 1)))
       duration = max(1, job.predicted_run_time)
       min_start = 0
       max_start = max_makespan - duration
@@ -411,17 +411,17 @@ class CplexBestof2Scheduler(Scheduler):
     if self.objective_function == 'AWF':
       # AWF
       AWF = [nodes * job.predicted_run_time * (time - job.submit_time + dcpm.end_of(interval))
-               for job, interval, nodes in queued_job_dict.values()]
+               for job, interval, nodes in list(queued_job_dict.values())]
       objective_var = dcpm.sum(AWF)
     elif self.objective_function == 'AF':
       AF = [time - job.submit_time + dcpm.end_of(interval) for job, interval, nodes in
-             queued_job_dict.values()]
+             list(queued_job_dict.values())]
       objective_var = dcpm.sum(AF)
     elif self.objective_function == 'BSLD':
       BSLD = [dcpm.max(1,
                   (time - job.submit_time + dcpm.end_of(interval)) / float(max(self.BSLD_bound,job.predicted_run_time))
                  )
-              for job, interval, nodes in queued_job_dict.values()]
+              for job, interval, nodes in list(queued_job_dict.values())]
       objective_var = dcpm.sum(BSLD)
     else: # self.objective_function == 'ASpWAS'
       # ASpWAS
@@ -429,7 +429,7 @@ class CplexBestof2Scheduler(Scheduler):
       # M1 = []
       M2 = []
       M3 = []
-      for job, interval, nodes in queued_job_dict.values():
+      for job, interval, nodes in list(queued_job_dict.values()):
         Tw = float(time) + dcpm.start_of(interval) - float(job.submit_time)
         # F = float(time) + dcpm.end_of(interval) - float(job.submit_time)
         F = Tw + float(job.predicted_run_time)
@@ -456,7 +456,7 @@ class CplexBestof2Scheduler(Scheduler):
     # print(res)
     # sorting results according to the priorities
     # TODO: make it an configuration parameter
-    sorted_dict_values = sorted(queued_job_dict.values(), key=lambda x: x[0].submit_time)
+    sorted_dict_values = sorted(list(queued_job_dict.values()), key=lambda x: x[0].submit_time)
     result = []
     for job, interval, _ in sorted_dict_values:
       result.append((time + res.get_var_solution(interval).get_start(), job))

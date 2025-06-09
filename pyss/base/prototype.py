@@ -5,6 +5,7 @@ import sys
 class JobEvent(object):
 
     global_event_counter = 0
+
     @classmethod
     def next_counter(cls):
         cls.global_event_counter += 1
@@ -12,18 +13,18 @@ class JobEvent(object):
 
     def __init__(self, timestamp, job):
         self.timestamp = timestamp
-        self.counter   = JobEvent.next_counter()
+        self.counter = JobEvent.next_counter()
         self.job = job
 
     def __repr__(self):
-        return type(self).__name__ + "<timestamp=%(timestamp)s, job=%(job)s>" % vars(self)
+        return f"{type(self).__name__}<timestamp={self.timestamp}, job={self.job}>"
 
-    def __cmp__(self, other):
-        return cmp(self._cmp_tuple, other._cmp_tuple)
+    def __lt__(self, other):
+        return self._cmp_tuple < other._cmp_tuple
 
     @property
     def _cmp_tuple(self):
-        "Order by timestamp and type order. A global counter tie-breaks."
+        # Order by timestamp, then event type priority, then global counter
         return (self.timestamp, self._type_order, self.counter)
 
     def __eq__(self, other):
@@ -31,7 +32,6 @@ class JobEvent(object):
 
     @property
     def _eq_tuple(self):
-        "equal iff timestamp, job, and type are the same"
         return (self.timestamp, self.job, type(self))
 
     @property
@@ -39,9 +39,10 @@ class JobEvent(object):
         if type(self) in self.EVENTS_ORDER:
             return self.EVENTS_ORDER.index(type(self))
         else:
-            return sys.maxint
+            return sys.maxsize
 
     EVENTS_ORDER = []
+
 
 class JobSubmissionEvent(JobEvent): pass
 class JobStartEvent(JobEvent): pass
@@ -204,34 +205,34 @@ class ValidatingMachine(Machine):
 def _job_input_to_job(job_input, total_num_processors):
     # if job input seems to be problematic
     if job_input.run_time <= 0:
-        print("WARNING: Job %s is not valid (run_time <= 0)." % job_input.number)
+        print(("WARNING: Job %s is not valid (run_time <= 0)." % job_input.number))
     elif job_input.num_requested_processors <= 0:
-        print("WARNING: Job %s is not valid (num_requested_processors <= 0)." % job_input.number)
+        print(("WARNING: Job %s is not valid (num_requested_processors <= 0)." % job_input.number))
     elif job_input.submit_time < 0:
-        print("WARNING: Job %s is not valid (submit_time < 0)." % job_input.number)
+        print(("WARNING: Job %s is not valid (submit_time < 0)." % job_input.number))
     else:
         user_estimated_run_time = int(job_input.requested_time)
         if user_estimated_run_time < job_input.run_time:
-            print("WARNING: Job %s is not fully valid (requested_time < run_time)." % job_input.number)
+            print(("WARNING: Job %s is not fully valid (requested_time < run_time)." % job_input.number))
             user_estimated_run_time = int(job_input.run_time)
         if user_estimated_run_time < 1:
-            print("WARNING: Job %s is not fully valid (requested_time < 1)." % job_input.number)
+            print(("WARNING: Job %s is not fully valid (requested_time < 1)." % job_input.number))
             user_estimated_run_time = 1
 
         actual_run_time = int(job_input.run_time)
         if actual_run_time > job_input.requested_time:
-            print("WARNING: Job %s is not fully valid (run_time > requested_time)." % job_input.number)
+            print(("WARNING: Job %s is not fully valid (run_time > requested_time)." % job_input.number))
             actual_run_time = int(job_input.requested_time)
         if actual_run_time < 1:
-            print("WARNING: Job %s is not fully valid (run_time < 1)." % job_input.number)
+            print(("WARNING: Job %s is not fully valid (run_time < 1)." % job_input.number))
             actual_run_time = 1
 
         num_required_processors = job_input.num_requested_processors
         if num_required_processors > total_num_processors:
-            print("WARNING: Job %s is not fully valid (num_requested_processors > total_num_processors)." % job_input.number)
+            print(("WARNING: Job %s is not fully valid (num_requested_processors > total_num_processors)." % job_input.number))
             num_required_processors = total_num_processors
         if num_required_processors < 1:
-            print("WARNING: Job %s is not fully valid (num_requested_processors < 1)." % job_input.number)
+            print(("WARNING: Job %s is not fully valid (num_requested_processors < 1)." % job_input.number))
             num_required_processors = 1
 
         return Job(
@@ -301,7 +302,7 @@ class Simulator(object):
 def simple_job_generator(num_jobs):
     import random
     start_time = 0
-    for id in xrange(num_jobs):
+    for id in range(num_jobs):
         start_time += random.randrange(0, 15)
         yield start_time, Job(
             id=id,

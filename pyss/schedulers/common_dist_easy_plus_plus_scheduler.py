@@ -1,4 +1,4 @@
-from easy_plus_plus_scheduler import EasyPlusPlusScheduler
+from .easy_plus_plus_scheduler import EasyPlusPlusScheduler
 
     
 class  CommonDistEasyPlusPlusScheduler(EasyPlusPlusScheduler):

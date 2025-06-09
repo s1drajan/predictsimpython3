@@ -9,7 +9,7 @@ use_checkpointing = True
 #The scheduler to use.
 #To list them: for s in schedulers/*_scheduler.py ; do basename -s .py $s; done
 scheduler = {
-  "name":'cplex_bestofn_scheduler',
+  "name": "cplex_bestofn_scheduler",
   "objective_function": "ASpWAS",
   "scheduling_timelimit": 20,
   "progressfile_freq": 300,

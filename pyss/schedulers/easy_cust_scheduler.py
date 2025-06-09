@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
-from common import Scheduler, CpuSnapshot, list_copy
+from .common import Scheduler, CpuSnapshot, list_copy
 from pyss.base.prototype import JobStartEvent, RunSchedulerEvent
 from . import sorters
 

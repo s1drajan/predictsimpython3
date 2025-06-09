@@ -20,7 +20,7 @@ class PercentileEstimator(object):
         else:
             if s.j==5:
                 s.q.sort()
-                s.n=range(0,5)
+                s.n=list(range(0,5))
                 s.np=[0,2*s.p,4*s.p,2+2*s.p,4]
 
             if x<s.q[0]:
@@ -83,7 +83,7 @@ if __name__=="__main__":
         l.append(v)
         p.fit(v)
     print("P2 estimate")
-    print(p.estimate())
+    print((p.estimate()))
     print("True value")
     l.sort()
-    print(l[int(math.ceil((n-1)*0.9+1))])
+    print((l[int(math.ceil((n-1)*0.9+1))]))

@@ -6,7 +6,7 @@ Created by Alexander Goponenko
 NOTE: "nodes" and "processors" are treated as they are a same thing
 """
 
-from __future__ import division
+
 
 from sortedcontainers import SortedSet
 

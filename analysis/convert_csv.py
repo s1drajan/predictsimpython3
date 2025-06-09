@@ -26,7 +26,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 '''
-from __future__ import division
+
 import pandas as pd
 from pandas.core.common import flatten
 import sys
@@ -38,7 +38,7 @@ baseline = 'reqtime'
 
 def convert_csv(in_name, out_name):
     df = pd.read_csv(in_name)
-    print(df.head())
+    print((df.head()))
 
     dataset = df["data"]
     l_data = sorted(dataset.unique())
@@ -49,7 +49,7 @@ def convert_csv(in_name, out_name):
     # print(split_conf)
     l_sched = split_conf[0].unique()
     # print (l_sched)
-    result = [['']] * 2 + list(map(lambda x: [x], config))
+    result = [['']] * 2 + list([[x] for x in config])
     # print(result)
     for data in l_data:
         df1 = df[df['data'] == data].drop(['data', 'config'],
@@ -67,7 +67,7 @@ def convert_csv(in_name, out_name):
         # assembling results to a box
         box = [[data] * len(df1.columns)] + [df1.columns.values.tolist()
                                              ] + df1.values.tolist()
-        result = list(map(lambda x: x[0] + [''] + x[1], zip(result, box)))
+        result = list([x[0] + [''] + x[1] for x in zip(result, box)])
 
     # print result
     with open(out_name, 'wb') as f:
@@ -76,8 +76,8 @@ def convert_csv(in_name, out_name):
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print("Usage: python {} <file_to_convert> <output_filename>".format(
-            os.path.basename(__file__)))
+        print(("Usage: python {} <file_to_convert> <output_filename>".format(
+            os.path.basename(__file__))))
         exit(1)
     in_name = sys.argv[1]
     out_name = sys.argv[2]

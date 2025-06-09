@@ -1,5 +1,5 @@
-from common import CpuSnapshot
-from easy_backfill_scheduler import EasyBackfillScheduler
+from .common import CpuSnapshot
+from .easy_backfill_scheduler import EasyBackfillScheduler
 from pyss.base.prototype import JobStartEvent
 
 

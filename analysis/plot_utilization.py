@@ -11,13 +11,13 @@ Usage:
 
 '''
 
-from docopt import docopt
+from .docopt import docopt
 import math
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import progressbar
-from usage_tracker import UsageTracker
+from .usage_tracker import UsageTracker
 import datetime as dt
 
 header = [
@@ -44,11 +44,11 @@ header = [
 
 def main_proc(in_file):
     df = pd.read_csv(in_file, sep='\s+', comment=';', header=None, names=header)
-    print(df.head())
+    print((df.head()))
 
     bsld = np.maximum((df['Wait Time'] + df['Run Time']) / np.maximum(df['Run Time'], 10), 1)
     avebsld = np.average(bsld)
-    print ("AVEbsld: {}".format(avebsld))
+    print(("AVEbsld: {}".format(avebsld)))
 
     # create profile
     ut = UsageTracker(0)
@@ -81,9 +81,9 @@ def main_proc(in_file):
     del d[-1]
 
     #plot profile
-    x = [x for x in d.keys()]
+    x = [x for x in list(d.keys())]
     # x = [dt.datetime.fromtimestamp(x) for x in d.keys()]
-    y = [y for y in d.values()]
+    y = [y for y in list(d.values())]
     # FIXME: use "step" instead of "plot"
     plt.plot(x, y)
     plt.xlim(min_time, max_time)

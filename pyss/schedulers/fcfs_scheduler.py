@@ -1,4 +1,4 @@
-from common import Scheduler, CpuSnapshot
+from .common import Scheduler, CpuSnapshot
 from base.prototype import JobStartEvent
 
 class FcfsScheduler(Scheduler):

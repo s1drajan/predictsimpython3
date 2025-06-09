@@ -1,12 +1,13 @@
-from predictor import Predictor
+from .predictor import Predictor
 #import numpy as np
 import math
 import itertools
-from valopt.models.knn import KNN
+from .valopt.models.knn import KNN
 from math import sqrt
 
 from operator import mul    # or mul=lambda x,y:x*y
 from fractions import Fraction
+from functools import reduce
 
 def kPn(n,k):
   return int( reduce(mul, (Fraction(n-i, i+1) for i in range(k)), 1) )
@@ -26,7 +27,7 @@ class PredictorKNN(Predictor):
         self.job_x= {}
         self.user_last_ending = {}
 
-        if "max_runtime" in options["scheduler"]["predictor"].keys():
+        if "max_runtime" in list(options["scheduler"]["predictor"].keys()):
             self.max_runtime=options["scheduler"]["predictor"]["max_runtime"]
         else:
             self.max_runtime=False
@@ -63,20 +64,20 @@ class PredictorKNN(Predictor):
         x=[0]*self.n_features
 
         #checks on user internal memory
-        if not self.user_job_last1.has_key(job.user_id):
+        if job.user_id not in self.user_job_last1:
             self.user_job_last1[job.user_id] = None
-        if not self.user_job_last2.has_key(job.user_id):
+        if job.user_id not in self.user_job_last2:
             self.user_job_last2[job.user_id] = None
-        if not self.user_job_last3.has_key(job.user_id):
+        if job.user_id not in self.user_job_last3:
             self.user_job_last3[job.user_id] = None
 
-        if not self.user_sum_cores.has_key(job.user_id):
+        if job.user_id not in self.user_sum_cores:
             self.user_sum_cores[job.user_id] = 0
-        if not self.user_sum_runtimes.has_key(job.user_id):
+        if job.user_id not in self.user_sum_runtimes:
             self.user_sum_runtimes[job.user_id] = 0
-        if not self.user_n_jobs.has_key(job.user_id):
+        if job.user_id not in self.user_n_jobs:
             self.user_n_jobs[job.user_id] = 0
-        if not self.user_last_ending.has_key(job.user_id):
+        if job.user_id not in self.user_last_ending:
             self.user_last_ending[job.user_id] = 0
 
         #TODO:make x
@@ -201,7 +202,7 @@ class PredictorKNN(Predictor):
 
     def store_x(self,job,x):
         """store x for a given job if its not already stored"""
-        if job not in self.job_x.keys():
+        if job not in list(self.job_x.keys()):
             self.job_x[job]=x
 
     def pop_x(self, job):
@@ -216,7 +217,7 @@ class PredictorKNN(Predictor):
         Modify the predicted_run_time of a job.
         Called when a job is submitted to the system.
         """
-        if not job in self.job_x.keys():
+        if not job in list(self.job_x.keys()):
             #make x
             x=self.make_x(job,current_time,list_running_jobs)
             #store x
@@ -240,13 +241,13 @@ class PredictorKNN(Predictor):
 
         #updating our data
         #store user previous run time history
-        assert self.user_job_last1.has_key(job.user_id) == True
-        assert self.user_job_last2.has_key(job.user_id) == True
-        assert self.user_job_last3.has_key(job.user_id) == True
-        assert self.user_sum_runtimes.has_key(job.user_id) == True
-        assert self.user_sum_cores.has_key(job.user_id) == True
-        assert self.user_n_jobs.has_key(job.user_id) == True
-        assert self.user_last_ending.has_key(job.user_id) == True
+        assert (job.user_id in self.user_job_last1) == True
+        assert (job.user_id in self.user_job_last2) == True
+        assert (job.user_id in self.user_job_last3) == True
+        assert (job.user_id in self.user_sum_runtimes) == True
+        assert (job.user_id in self.user_sum_cores) == True
+        assert (job.user_id in self.user_n_jobs) == True
+        assert (job.user_id in self.user_last_ending) == True
         self.user_job_last3[job.user_id] = self.user_job_last2[job.user_id]
         self.user_job_last2[job.user_id] = self.user_job_last1[job.user_id]
         self.user_job_last1[job.user_id] = job

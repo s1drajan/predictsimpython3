@@ -12,14 +12,14 @@ Options:
     -i --interactive                               Interactive mode at key points in script.
 '''
 
-from base.docopt import docopt
-from base.prototype import _job_input_to_job
-from base.workload_parser import parse_lines
+from .base.docopt import docopt
+from .base.prototype import _job_input_to_job
+from .base.workload_parser import parse_lines
 #from base.np_printutils import array_to_file
 #from base.np_printutils import array_to_file_n
 #from base.np_printutils import np_array_to_file
-from simpy import Environment,simulate,Monitor
-from simpy.util import start_delayed
+from .simpy import Environment,simulate,Monitor
+from .simpy.util import start_delayed
 
 #parameters for the argument retrieval:
 supported_losses=['squared_loss']
@@ -48,7 +48,7 @@ else:
 
 #argement management: max_cores
 config = {}
-execfile(arguments["<config_file>"], config)
+exec(compile(open(arguments["<config_file>"], "rb").read(), arguments["<config_file>"], 'exec'), config)
 if config['scheduler']['predictor']['max_cores']=="auto":
     with open(arguments['<swf_file>']) as input_file:
         num_processors=None
@@ -89,26 +89,26 @@ with open(arguments['<swf_file>'], 'rt') as  f:
 
     print("Choosing predictor.")
     if config["scheduler"]["predictor"]["name"]=="predictor_tsafrir":
-        from predictors.predictor_tsafrir import PredictorTsafrir
+        from .predictors.predictor_tsafrir import PredictorTsafrir
         predictor=PredictorTsafrir({})
     elif config["scheduler"]["predictor"]["name"]=="predictor_clairvoyant":
-        from predictors.predictor_clairvoyant import PredictorClairvoyant
+        from .predictors.predictor_clairvoyant import PredictorClairvoyant
         predictor=PredictorClairvoyant({})
     elif config["scheduler"]["predictor"]["name"]=="predictor_reqtime":
-        from predictors.predictor_reqtime import PredictorReqtime
+        from .predictors.predictor_reqtime import PredictorReqtime
         predictor=PredictorReqtime({})
     elif config["scheduler"]["predictor"]["name"]=="predictor_double_reqtime":
-        from predictors.predictor_double_reqtime import PredictorDoubleReqtime
+        from .predictors.predictor_double_reqtime import PredictorDoubleReqtime
         predictor=PredictorDoubleReqtime({})
     elif config["scheduler"]["predictor"]["name"]=="predictor_sgdlinear":
         #if arguments["<loss>"] not in ["squared_loss"]:
             #raise ValueError("loss not supported. supported losses=%s"%(supported_losses.__str__()))
         #if arguments["<penalty>"] not in ["none"]:
             #raise ValueError("penalty not supported. supported penalties=%s"%(supported_penalties.__str__()))
-        from predictors.predictor_sgdlinear import PredictorSgdlinear
+        from .predictors.predictor_sgdlinear import PredictorSgdlinear
         predictor=PredictorSgdlinear(config)
     elif config["scheduler"]["predictor"]["name"]=="predictor_knn":
-        from predictors.predictor_knn import PredictorKNN
+        from .predictors.predictor_knn import PredictorKNN
         predictor=PredictorKNN(config)
     else:
         raise ValueError("no valid predictor specified")

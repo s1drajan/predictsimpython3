@@ -5,7 +5,7 @@ Created by Alexander Goponenko at 9/7/2021
 
 NOTE: "nodes" and "processors" are treated as they are a same thing
 '''
-from __future__ import division
+
 
 from sortedcontainers import SortedSet
 from ortools.constraint_solver import pywrapcp
@@ -204,15 +204,15 @@ class ConstrProgScheduler(Scheduler):
     # add objective
     # AWF
     # AWF = [nodes*job.predicted_run_time * (time - job.submit_time + interval.SafeEndExpr(max_makespan)) for job, interval, nodes in queued_job_dict.values()]
-    AWF = [nodes*job.predicted_run_time * (time - job.submit_time + interval.EndExpr()) for job, interval, nodes in queued_job_dict.values()]
+    AWF = [nodes*job.predicted_run_time * (time - job.submit_time + interval.EndExpr()) for job, interval, nodes in list(queued_job_dict.values())]
     objective_var = solver.Sum(AWF).Var()
 
     # ASpWAS
     # M_job = n * (F ** (p + 1) - Tw ** (p + 1))
     M1 = []
     M2 = []
-    print("max_span: {}".format(max_makespan))
-    for job, interval, nodes in queued_job_dict.values():
+    print(("max_span: {}".format(max_makespan)))
+    for job, interval, nodes in list(queued_job_dict.values()):
       Tw = time + interval.SafeStartExpr(max_makespan - job.predicted_run_time) - job.submit_time
       Tw = time + interval.StartExpr() - job.submit_time
       F = time + interval.SafeEndExpr(max_makespan) - job.submit_time
@@ -247,13 +247,13 @@ class ConstrProgScheduler(Scheduler):
     is_solved = solver.Solve(db, monitors)
 
     # is_solved = solver.NextSolution()
-    print("Solution found: {}.".format(is_solved))
-    print("Objective function: {}".format(best_monitor.ObjectiveValue(0)))
+    print(("Solution found: {}.".format(is_solved)))
+    print(("Objective function: {}".format(best_monitor.ObjectiveValue(0))))
 
 
     # sorting results according to the priorities
     # TODO: make it an configuration parameter
-    sorted_dict_values = sorted(queued_job_dict.values(), key=lambda x: x[0].submit_time)
+    sorted_dict_values = sorted(list(queued_job_dict.values()), key=lambda x: x[0].submit_time)
     result = []
     if return_plan:
       for job, interval, _ in sorted_dict_values :

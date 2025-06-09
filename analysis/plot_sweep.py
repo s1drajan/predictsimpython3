@@ -26,13 +26,13 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 
-from __future__ import division
+
 
 import sys
 import os
 import csv
 
-from docopt import docopt
+from .docopt import docopt
 
 import pandas as pd
 import numpy as np
@@ -50,7 +50,7 @@ Colors = ['crimson', 'green', 'deepskyblue', 'darkviolet']
 
 def plot_sweep_from_csv(in_name):
     df = pd.read_csv(in_name)
-    print(df.head())
+    print((df.head()))
 
     df = df.sort_values("config")
 
@@ -97,7 +97,7 @@ def plot_sweep_from_csv(in_name):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print ("Usage: python {} <csv_sweep_file>".format(os.path.basename(__file__)))
+        print(("Usage: python {} <csv_sweep_file>".format(os.path.basename(__file__))))
         exit(1)
     in_name = sys.argv[1]
 

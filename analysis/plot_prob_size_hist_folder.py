@@ -27,8 +27,8 @@ import argparse
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from plot_prob_size_hist import plot_psize_hist
-from calculate_problem_size import calculate_problem_size
+from .plot_prob_size_hist import plot_psize_hist
+from .calculate_problem_size import calculate_problem_size
 
 
 # names of columns in swf files

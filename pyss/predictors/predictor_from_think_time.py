@@ -1,4 +1,4 @@
-from predictor import Predictor
+from .predictor import Predictor
 
 class PredictorFromThinkTime(Predictor):
 	"""

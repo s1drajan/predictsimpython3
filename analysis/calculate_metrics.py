@@ -29,8 +29,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 
-from __future__ import division
-from docopt import docopt
+
+from .docopt import docopt
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -472,7 +472,7 @@ def calculate_metrics(in_file, do_plot=False, notrim=False):
     print("Warning: requested number of processors is greater than the number of nodes in the cluster")
     print(check)
 
-  print("Total # of jobs: {}".format(len(df)))
+  print(("Total # of jobs: {}".format(len(df))))
   if notrim:
     # we want to include all data
     print("Not trimming data")
@@ -498,7 +498,7 @@ def calculate_metrics(in_file, do_plot=False, notrim=False):
   df_tr = df[earliest_good_time <= df['End Time']]
   df_tr = df[df['End Time'] <= latest_good_time]
 
-  print("Number of jobs after trimming: {}".format(len(df_tr)))
+  print(("Number of jobs after trimming: {}".format(len(df_tr))))
 
   for x in metrics:
     res.append(x[1](df_tr))
@@ -531,4 +531,4 @@ if __name__ == "__main__":
 
   print(values)
   for key, value in zip(header, values):
-    print("{}: {}".format(key, value))
+    print(("{}: {}".format(key, value)))

@@ -26,14 +26,14 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 
-from docopt import docopt
+from .docopt import docopt
 import math
 import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import progressbar
-from usage_tracker import UsageTracker
+from .usage_tracker import UsageTracker
 
 header = [
     'job_id',
@@ -59,16 +59,16 @@ header = [
 
 def main_proc(in_file, interval='48h'):
     df = pd.read_csv(in_file, sep='\s+', comment=';', header=None, names=header)
-    print(df.head())
+    print((df.head()))
 
     bsld = np.maximum((df['Wait Time'] + df['Run Time']) / np.maximum(df['Run Time'], 10), 1)
     avebsld = np.average(bsld)
-    print ("AVEbsld: {}".format(avebsld))
+    print(("AVEbsld: {}".format(avebsld)))
 
     # create profile
 
     term_times = sorted(df["Submit Time"] + df["Wait Time"] + df["Run Time"])
-    term_count = range(1, len(term_times)+1)
+    term_count = list(range(1, len(term_times)+1))
 
 
     #plot profile

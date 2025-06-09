@@ -45,12 +45,12 @@ class SSGD(object):
     def verbose(func):
          def wrap(self,x,y):
              if self.verbose:
-                 print(self.model.get_param_vector())
-                 print(self.eta*self.grad_loss(x,y))
+                 print((self.model.get_param_vector()))
+                 print((self.eta*self.grad_loss(x,y)))
              ret = func(self,x,y)
              if self.verbose:
-                 print("gradient descent step with fixed eta: gradient l2 norm is %s"
-                         %(-self.eta*np.dot(self.grad_loss(x,y),self.grad_loss(x,y))))
+                 print(("gradient descent step with fixed eta: gradient l2 norm is %s"
+                         %(-self.eta*np.dot(self.grad_loss(x,y),self.grad_loss(x,y)))))
              return ret
          return wrap
 

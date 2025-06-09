@@ -92,7 +92,7 @@ def parse_lines(lines_iterator):
 def _measure_performance():
     import sys
     import time
-    print "reading from stdin"
+    print("reading from stdin")
     start_time = time.time()
     jobs = parse_lines(sys.stdin)
     counter = 0
@@ -100,9 +100,9 @@ def _measure_performance():
         counter += 1
     end_time = time.time()
     total_time = end_time - start_time
-    print "no. of jobs:", counter
-    print "total time (seconds):", total_time
-    print "jobs per second: %3.1f" % (float(counter) / total_time)
+    print("no. of jobs:", counter)
+    print("total time (seconds):", total_time)
+    print("jobs per second: %3.1f" % (float(counter) / total_time))
 
 def _test():
     job = JobInput("   59    26613      0    716   32     -1    -1   -1     -1    -1 -1   4   1   3  0 -1 -1 -1")

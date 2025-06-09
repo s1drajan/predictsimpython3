@@ -1,5 +1,5 @@
-from common import CpuSnapshot
-from conservative_scheduler import ConservativeScheduler
+from .common import CpuSnapshot
+from .conservative_scheduler import ConservativeScheduler
 
 
 #this scheduler only doubles the user estimation and then apply the regular Conservative Scheduler

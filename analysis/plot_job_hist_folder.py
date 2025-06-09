@@ -25,7 +25,7 @@ import argparse
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from plot_job_hist import plot_job_hist
+from .plot_job_hist import plot_job_hist
 
 
 # names of columns in swf files

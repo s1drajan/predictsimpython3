@@ -20,9 +20,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 See details in the class documentation.
 """
-from __future__ import division
+
 from sortedcontainers import SortedDict
-from predictor import Predictor
+from .predictor import Predictor
 
 
 class PredictorTopPercent(Predictor):

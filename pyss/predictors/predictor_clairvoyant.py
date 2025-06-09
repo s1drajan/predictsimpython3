@@ -7,7 +7,7 @@ class PredictorClairvoyant(Predictor):
     """
 
     def __init__(self, options):
-        if "predict_multiplier" in options["scheduler"]["predictor"].keys():
+        if "predict_multiplier" in list(options["scheduler"]["predictor"].keys()):
             self.predict_multiplier = options["scheduler"]["predictor"]["predict_multiplier"]
         else:
             self.predict_multiplier = 1

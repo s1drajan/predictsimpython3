@@ -38,16 +38,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 '''
 
-from __future__ import division
+
 
 import os.path
 
-from base.docopt import docopt
+from .base.docopt import docopt
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-from base.prototype import Job
+from .base.prototype import Job
 
 header = [
     'job_id',
@@ -70,7 +70,7 @@ header = [
     'Think Time'
 ]
 
-from predictors.predictor_exact import PredictorExact as Predictor
+from .predictors.predictor_exact import PredictorExact as Predictor
 #
 # options = {
 #     'scheduler':{

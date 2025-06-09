@@ -19,9 +19,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
-from job_req_pred_2020.predictsim_wrapper import PredictorWrapper
-from job_req_pred_2020.predictor_complete import PredictComplete as JRPBase
-from job_req_pred_2020.recorder_mem import Recorder
+from .job_req_pred_2020.predictsim_wrapper import PredictorWrapper
+from .job_req_pred_2020.predictor_complete import PredictComplete as JRPBase
+from .job_req_pred_2020.recorder_mem import Recorder
 
 PARAM_NAME = 'duration'
 

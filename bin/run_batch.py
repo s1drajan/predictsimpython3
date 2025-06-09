@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 '''
-from __future__ import print_function
+
 
 import argparse
 import multiprocessing
@@ -80,7 +80,7 @@ def run_batch_list(n_workers, scs, with_progress_freq=None):
     exception = Exception
     for s_name, c_name, o_name in scs:
         config = {}
-        execfile(c_name, config)
+        exec(compile(open(c_name, "rb").read(), c_name, 'exec'), config)
         del config['__builtins__']
         config["input_file"] = s_name
         config["output_swf"] = o_name

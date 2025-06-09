@@ -4,7 +4,7 @@
 
 import sys
 import os.path
-from run_simulator import parse_and_run_simulator
+from .run_simulator import parse_and_run_simulator
 import multiprocessing
 import pprint
 import random
@@ -32,7 +32,7 @@ pool_size = 8
 
 
 
-execfile('../../../experiments/experiment_dicts.py')
+exec(compile(open('../../../experiments/experiment_dicts.py', "rb").read(), '../../../experiments/experiment_dicts.py', 'exec'))
 
 
 
@@ -72,23 +72,23 @@ def launchExpe(options):
 	myid = next_id()
 	
 	if not ( skip_always_done and os.path.isfile(options["output_swf"]) ):
-		print bcolors.WARNING+"Start expe "+str(myid)+ bcolors.ENDC+" : "+str(options)
+		print(bcolors.WARNING+"Start expe "+str(myid)+ bcolors.ENDC+" : "+str(options))
 		error = False
 		tempout = sys.stdout
 		sys.stdout = open(options["output_swf"]+".out", 'w')
 		sys.stderr = sys.stdout
 		try:
 			parse_and_run_simulator(options)
-		except Exception,e:
-			print "Exception: "+str(e)
+		except Exception as e:
+			print("Exception: "+str(e))
 			error = str(e)
 		sys.stdout = tempout
 		if not error:
-			print bcolors.OKBLUE+"End   epxe "+str(myid)+ bcolors.ENDC
+			print(bcolors.OKBLUE+"End   epxe "+str(myid)+ bcolors.ENDC)
 		else:
-			print bcolors.FAIL+"ERROR on "+str(myid)+": "+str(e)+ bcolors.ENDC
+			print(bcolors.FAIL+"ERROR on "+str(myid)+": "+str(e)+ bcolors.ENDC)
 	else:
-		print bcolors.OKGREEN+"Already done"+str(myid)+ bcolors.ENDC+" : "+str(options)
+		print(bcolors.OKGREEN+"Already done"+str(myid)+ bcolors.ENDC+" : "+str(options))
 
 
 #to have more quickly a wild range of different configs
