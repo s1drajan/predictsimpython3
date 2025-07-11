@@ -31,6 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 from .docopt import docopt
+import argparse
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -518,17 +519,33 @@ def calculate_metrics(in_file, do_plot=False, notrim=False):
 if __name__ == "__main__":
   # Retrieve arguments
   # arguments = docopt(__doc__, version='1.0.0rc2')
-  arguments, exception = docopt(__doc__, version='1.0.0rc2')
+  # arguments, exception = docopt(__doc__, version='1.0.0rc2')
 
   # print(arguments)
+  parser = argparse.ArgumentParser(
+    description="SWF analysis program")
+  parser.add_argument('swf_file',
+                      help="file which we are analyzing")
+  parser.add_argument("--plot_dist",
+                      action="store_true",
+                      help="should we plot distribution")
+  parser.add_argument("--notrim",
+                      action="store_true",
+                      help="not to trim")
 
-  in_file = arguments['<swf_file>']
-  do_plot = arguments['--plot_dist']
-  notrim = arguments['--notrim']
+  args = parser.parse_args()
+  in_file = args.swf_file
+  do_plot = args.plot_dist
+  notrim = args.notrim
+
+  # print(args,in_file,do_plot,notrim)
+  # in_file = arguments['<swf_file>']
+  # do_plot = arguments['--plot_dist']
+  # notrim = arguments['--notrim']
 
   values = calculate_metrics(in_file, do_plot, notrim)
   header = get_header()
 
-  print(values)
+  # print(values)
   for key, value in zip(header, values):
     print(("{}: {}".format(key, value)))
