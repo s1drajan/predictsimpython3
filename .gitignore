@@ -5,3 +5,6 @@
 *.png
 *.swf
 *.csv*.bak
+venv
+venv2
+output
