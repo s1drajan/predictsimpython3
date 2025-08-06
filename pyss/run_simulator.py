@@ -64,6 +64,7 @@ def parse_and_run_simulator(options, exception):
     try:
         print("..starting simulations..")
         starttime = datetime.now()
+        print("printing simulatino stuuff",options["input_file"])
 
         simulator.run_simulator(
             num_processors=options["num_processors"],

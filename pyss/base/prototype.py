@@ -54,8 +54,9 @@ class RunSchedulerEvent(JobEvent):pass
 JobEvent.EVENTS_ORDER = [JobPredictionIsOverEvent, JobSubmissionEvent, JobTerminationEvent, JobStartEvent, RunSchedulerEvent]
 
 class Job(object):
-    def __init__(self, id, user_estimated_run_time, actual_run_time, num_required_processors, \
-            submit_time=0, admin_QoS=0, user_QoS=0, user_id=0, think_time=0, group_id=-1, executable_id=-1): # TODO: are these defaults used?
+    def __init__(self, id, user_estimated_run_time, actual_run_time, num_required_processors, # original params 
+            submit_time=0, admin_QoS=0, user_QoS=0, user_id=0, think_time=0, group_id=-1, executable_id=-1, # TODO: are these defaults used?
+            job_type = 0, input_params = {}): #new args 
 
         pass #assert num_required_processors > 0, "job_id=%s"%id
         pass #assert actual_run_time > 0, "job_id=%s"%id
@@ -67,6 +68,10 @@ class Job(object):
         self.actual_run_time = actual_run_time
         self.num_required_processors = num_required_processors
         self.user_id = user_id
+        
+        #params
+        self.job_type = job_type
+        self.input_params = input_params
 
         # not used by base
         self.submit_time = submit_time # Assumption: submission time is greater than zero
@@ -244,7 +249,9 @@ def _job_input_to_job(job_input, total_num_processors):
             user_id = job_input.user_id,
             think_time = job_input.think_time_from_preceding_job,
             group_id = job_input.group_id,
-            executable_id = job_input.executable_number
+            executable_id = job_input.executable_number,
+            job_type= job_input.job_type,
+            input_params= job_input.params 
         )
 
     return Job(
