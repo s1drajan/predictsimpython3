@@ -8,3 +8,4 @@ progressbar
 # seaborn
 sortedcontainers
 docplex
+quantile-forest
