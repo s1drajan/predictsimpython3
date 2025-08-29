@@ -3,7 +3,14 @@ JOB_TYPE_SWFFT = 1
 JOB_TYPE_NEKBONE = 2
 JOB_TYPE_EXAMINIMDSNAP = 3
 
-JOB_TYPE_RANGE = range(JOB_TYPE_EXAMINIMDSNAP) # max number of jobs
+JOB_TYPE_RANGE = range(JOB_TYPE_EXAMINIMDSNAP+1) # max number of jobs
+
+JOB_TYPE_TO_STR = {
+    JOB_TYPE_DEFAULT: "Default",
+    JOB_TYPE_SWFFT: "SWFFT",
+    JOB_TYPE_NEKBONE: "Nekbone",
+    JOB_TYPE_EXAMINIMDSNAP: "ExaMiniMDSnap"
+}
 
 params_map = {
     JOB_TYPE_DEFAULT: [],

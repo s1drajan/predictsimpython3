@@ -30,7 +30,7 @@ scheduler = {
   }
 
 #Force the number of available processors in the simulated parallel machine
-#num_processors = 80640
+# num_processors = 80640
 
 #should some stats have to be computed?
 stats = False

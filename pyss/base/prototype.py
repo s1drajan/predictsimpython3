@@ -250,7 +250,7 @@ def _job_input_to_job(job_input, total_num_processors):
             think_time = job_input.think_time_from_preceding_job,
             group_id = job_input.group_id,
             executable_id = job_input.executable_number,
-            job_type= job_input.job_type,
+            job_type = job_input.job_type,
             input_params= job_input.params 
         )
 
