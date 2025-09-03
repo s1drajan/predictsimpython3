@@ -13,15 +13,19 @@ import pandas as pd
 import time
 
 TRAIN_MAX = 5000
+RETRAIN_MAX = 100 # https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7776517
 
 """
 Each application gets there own Controller which wraps the necessary logic and functions
 """
 class Controller():
-    def __init__(self): 
+    def __init__(self,quantiles): 
         self.model = RandomForestQuantileRegressor()
         self.df = pd.DataFrame()
+        self.train_batch = pd.DataFrame()
+
         self.is_trained = False
+        self.quantiles = quantiles 
 
     def concat(self, new_df):
         self.df = pd.concat([self.df, new_df], ignore_index=True)
@@ -93,11 +97,29 @@ class Controller():
         preprocessor = self.generate_preprocessor(X)
         return self.get_pipeline(preprocessor, self.model)
     
-    def train(self,X,y):
-        if self.is_trained:
-            print("WARNING ATTEMPTING TO TRAIN A MODEL WHICH IS ALREADY TRAINED...")
-            return 
+    def fit(self, job):
+        # save real runtime so we can train on it
+        job.input_params["timeTaken"] = job.actual_run_time 
 
+        # training logic
+        # if time for retrain
+        # or time for first train 
+        if ((self.is_trained and len(self.train_batch) < RETRAIN_MAX) or 
+            (not self.is_trained and len(self.train_batch) < TRAIN_MAX)):  
+            self.train_batch = pd.concat([
+                self.train_batch, 
+                pd.DataFrame([job.input_params])], 
+                ignore_index=True)
+            return
+
+        print('starting train')
+        # print(len(self.df))
+        self.concat(self.train_batch)
+
+        # temp code to verify dataframe
+        # self.df.to_csv(f"results/job-{job_types.JOB_TYPE_TO_STR[job.job_type]}-out.csv")
+
+        X,y = self.transform_df(predictCol="timeTaken")
         regressor = self.get_regressor(X)
 
         startTime = time.process_time()
@@ -106,14 +128,22 @@ class Controller():
 
         # finishing the training
         self.is_trained = True
+        self.train_batch = pd.DataFrame() # clear the batch
+
     
-    def predict(self,x):
+            
+    def predict(self,raw_job):
+        """
+        pass in raw job given by the predict function in the simulator. 
+        Then we will parse the job and put into a format for our predictor to understand 
+        """
         if not self.regressor or not self.is_trained:
-            print("WARNING WE HAVE NO REGRESSOR TO PREDICT On")
-            exit()
-        
-        return self.regressor.predict(x,quantiles=[0.5,0.6,0.7])
-    
+            print("WARNING WE HAVE NO REGRESSOR TO PREDICT ON, FORCING CRASH")
+            exit()  
+
+        x = pd.DataFrame([raw_job.input_params])
+        return self.regressor.predict(x,quantiles=self.quantiles)
+     
     @property
     def df_rows(self):
         return self.df.shape[0]
@@ -126,10 +156,10 @@ class PredictorQuantileForest(Predictor):
         # do anything necessary that will require inits, 
         # so like creating the quantile forest model and selecting interval 
         self.controllers = {}
-        self.t = 0
+        self.train_batch = pd.DataFrame()
 
         for job_type in job_types.JOB_TYPE_RANGE:
-            self.controllers[job_type] = Controller()
+            self.controllers[job_type] = Controller(quantiles=[0.5,0.99])
 
         pass
     
@@ -143,8 +173,17 @@ class PredictorQuantileForest(Predictor):
             job.predicted_run_time = job.user_estimated_run_time
             return
         
-        print(controller.predict(pd.DataFrame([job.input_params])), job.actual_run_time)
-        exit()
+        # print(controller.predict(job),job.actual_run_time)        
+        result = controller.predict(job) # [[q1,q2,q3]]
+        # print(result, type(result), type(result[0][0]))
+
+        q50 = int(result[0][0])
+        q99 = int(result[0][1])
+        if q50 > job.user_estimated_run_time:
+            job.predicted_run_time = job.user_estimated_run_time
+        else:
+            job.predicted_run_time = q50
+        # job.predicted_run_time = int(result[0][0]) # 50th
 
     """
     This function will be used to train and retrain the model
@@ -153,19 +192,4 @@ class PredictorQuantileForest(Predictor):
     """
     def fit(self, job, current_time):
         controller = self.controllers[job.job_type]
-
-        if controller.df_rows < TRAIN_MAX:
-            job.input_params["timeTaken"] = job.actual_run_time # save real runtime so we can train on it
-            controller.concat(pd.DataFrame([job.input_params]))
-            return 
-
-        if controller.is_trained:
-            return
-
-        # controller not trained and we have enough TRAIN data 
-        print('starting train')
-        # temp code to verify dataframe
-        controller.df.to_csv(f"results/job-{job_types.JOB_TYPE_TO_STR[job.job_type]}-out.csv")
-
-        X,y = controller.transform_df(predictCol="timeTaken")
-        controller.train(X,y)
+        controller.fit(job) 

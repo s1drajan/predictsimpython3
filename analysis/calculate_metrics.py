@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 '''
 
 
-from .docopt import docopt
+import docopt
 import argparse
 import pandas as pd
 import numpy as np
@@ -279,8 +279,6 @@ def check_resources(df, maxNodes):
   else:
     return None
 
-
-
 def plot_dist(df, fig_filename=None):
   pred = 'Think Time'
   real = 'Run Time'
@@ -302,7 +300,7 @@ def plot_dist(df, fig_filename=None):
   extent = (np.log10(minv), np.log10(maxv), np.log10(minv), np.log10(maxv),)
   #print('Extent: ', extent)
 
-  g = sns.JointGrid(real, pred, df, xlim=lim, ylim=lim)
+  g = sns.JointGrid(x=real, y=pred, data=df, xlim=lim, ylim=lim)
   g.fig.subplots_adjust(left=0.1, top=0.95)
   g.plot_marginals(sns.distplot, hist=True, kde=False, bins=mybins)
   # g.plot_joint(plt.scatter, edgecolor='white')
@@ -349,12 +347,12 @@ def plot_dist(df, fig_filename=None):
   g.fig.suptitle(fig_filename+'\n'+'Avg error: '+str(avg)+'\nabs r2: '+str(r_squared))
 
   if fig_filename:
+    print(fig_filename)
     plt.savefig(fig_filename+".png")
   else:
     plt.draw()
     plt.show()
   plt.close()
-
 
 def Utilization(df, start, end, maxNodes):
   """
