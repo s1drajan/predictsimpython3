@@ -27,7 +27,7 @@ RETRAIN_MAX = 100 # https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=777
 Each application gets there own Controller which wraps the necessary logic and functions
 """
 class Controller():
-    def __init__(self,job_type,quantiles,sliding_window=False,drop_cols=[]): 
+    def __init__(self,job_type,timestamp_id,quantiles,sliding_window=False,drop_cols=[]): 
         self.model = RandomForestQuantileRegressor()
         self.df = pd.DataFrame()
         self.train_batch = pd.DataFrame()
@@ -43,8 +43,7 @@ class Controller():
         self.predicted_plot_y = [[] for _ in range(len(quantiles))]
         self.plot_iter = 0
 
-        self.timestamp_id = time.time()
-        os.makedirs(f"results/{self.timestamp_id}")
+        self.timestamp_id = timestamp_id
 
     def concat(self, new_df):
         # not sliding window or we aren't ready to trim the window
@@ -143,6 +142,7 @@ class Controller():
                 self.train_batch, 
                 pd.DataFrame([job.input_params])], 
                 ignore_index=True)
+            # print(self.train_batch,pd.DataFrame([job.input_params]))
             return
         
         # plot logic
@@ -172,9 +172,7 @@ class Controller():
 
         # finishing the training
         self.is_trained = True
-        self.train_batch = pd.DataFrame() # clear the batch
-
-    
+        self.train_batch = pd.DataFrame() # clear the batch 
             
     def predict(self,raw_job):
         """
@@ -211,11 +209,10 @@ class Controller():
         plt.ylabel("Predicted Runtime")
         plt.title(title)
         plt.legend()
-        plt.savefig(f"results/{self.timestamp_id}/{title.replace(" ","-")}.png")
+        plt.savefig(f"results/{self.timestamp_id}/{self.job_type_str}/{title.replace(" ","-")}.png")
         plt.close()
 
-        self.plot_iter+=1
-        
+        self.plot_iter+=1 
 
     @property
     def df_rows(self):
@@ -229,6 +226,14 @@ class PredictorQuantileForest(Predictor):
         # do anything necessary that will require inits, 
         # so like creating the quantile forest model and selecting interval 
         self.drop_cols = defaultdict(list)
+        import warnings
+        import pandas as pd
+
+        warnings.filterwarnings(
+            "ignore",
+            category=FutureWarning,
+            message="The behavior of DataFrame concatenation with empty or all-NA entries is deprecated.*"
+        )
 
         self.drop_cols[job_types.JOB_TYPE_EXAMINIMDSNAP] = [ 
             "testNum",
@@ -256,12 +261,15 @@ class PredictorQuantileForest(Predictor):
         self.controllers = {}
         self.train_batch = pd.DataFrame()
 
+        timestamp_id = time.time()
         for job_type in job_types.JOB_TYPE_RANGE:
             self.controllers[job_type] = Controller(
                 job_type=job_type,
+                timestamp_id=timestamp_id,
                 quantiles=[0.1,0.5,0.99],
                 sliding_window=True,
                 drop_cols=self.drop_cols[job_type])
+            os.makedirs(f"results/{timestamp_id}/{job_types.JOB_TYPE_TO_STR[job_type]}")
 
         pass
     
@@ -271,7 +279,7 @@ class PredictorQuantileForest(Predictor):
         # maybe some methodogly could be used that if we our under a specfic runtime then we shouldn't predict
         controller = self.controllers[job.job_type]
 
-        if not controller.is_trained or job.job_type == job_types.JOB_TYPE_NEKBONE:
+        if not controller.is_trained:
             job.predicted_run_time = job.user_estimated_run_time
             return
         
@@ -293,8 +301,5 @@ class PredictorQuantileForest(Predictor):
     For now we will just implement the intital train (5000 jobs) and worry about retraining later
     """
     def fit(self, job, current_time):
-        # temp debug
-        if job.job_type == job_types.JOB_TYPE_NEKBONE: 
-            return 
         controller = self.controllers[job.job_type]
         controller.fit(job) 
