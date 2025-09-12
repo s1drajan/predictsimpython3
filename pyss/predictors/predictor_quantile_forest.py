@@ -14,36 +14,133 @@ from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
 from sklearn import feature_selection
 
+import pickle
 import pandas as pd
 import time
 
 import os
 
-WINDOW_MAX = 6000 #10000
+WINDOW_MAX = 10000
 TRAIN_MAX = 5000
 RETRAIN_MAX = 100 # https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7776517
+
+PICKLE_DIR = "./pickles/"
+SHOULD_DEPICKLE = True 
+SHOULD_PICKLE = True
+
+# helper functions when processing data
+def generate_preprocessor(X):
+    numeric_features = []
+    categorical_features = []
+    # X = self.df # to adapt to the copied code
+
+    for col in X:
+        # Identify what type each column is.
+        isNumeric = True
+        for rowIndex, row in X[col].items():
+            try:
+                # If it can be a float, make it a float.
+                X.loc[col][rowIndex] = float(X.loc[col][rowIndex])
+                # If the float is NaN (unacceptable to Sci-kit), make it -1.0 for now.
+                if pd.isnull(X[col][rowIndex]):
+                    X.loc[col][rowIndex] = -1.0
+            except:
+                # Otherwise, we will assume this is categorical data.
+                isNumeric = False
+        if isNumeric or X[col].dtype == float:
+            # For whatever reason, float conversions don't want to work in Pandas dataframes.
+            # Try changing the value column-wide instead.
+            # TODO: Doesn't seem to actually solve anything.
+            # X.loc[col] = X.loc[col].astype(float)
+            numeric_features.append(str(col))
+        else:
+            categorical_features.append(str(col))
+
+    # Standardization for numeric data.
+    numeric_transformer = Pipeline(
+        steps=[("imputer", SimpleImputer(strategy="median")),
+            ("scaler", StandardScaler())])
+
+    # One-hot encoding for categorical data.
+    categorical_transformer = OneHotEncoder(sparse_output=False, handle_unknown="ignore")
+    # Add the transformers to a preprocessor object.
+    preprocessor = ColumnTransformer(transformers=[
+        ("num", numeric_transformer, numeric_features),
+        ("cat", categorical_transformer, categorical_features),])
+
+    return preprocessor
+
+def get_pipeline(preprocessor, clf):
+    """ 
+    Convenience function to add a preprocessor to a regression pipeline.
+    """
+    return Pipeline(steps=[("preprocessor", preprocessor), ("classifier", clf)])
+
+class PickleData:
+    def __init__(self, train_max, window_max, retrain_max, data):
+        self.train_max = train_max
+        self.window_max = window_max
+        self.retrain_max = retrain_max
+        self.data = data
+    
+    def get_data(self):
+        res = (self.train_max, self.window_max, self.retrain_max)
+        expected = (TRAIN_MAX, WINDOW_MAX, RETRAIN_MAX)
+
+        if res == expected:
+            return self.data
+        exit(f"bad pickle - (expected {res}) != (got {expected})")
 
 """
 Each application gets there own Controller which wraps the necessary logic and functions
 """
 class Controller():
-    def __init__(self,job_type,timestamp_id,quantiles,sliding_window=False,drop_cols=[]): 
+    def __init__(self, job_type, timestamp_id,
+                 quantiles, input_file : str, pickling=False,
+                 sliding_window=False, drop_cols=[]): 
+        
+        # consturctor args
+        self.job_type = job_type
+        self.drop_cols = drop_cols
+        self.quantiles = quantiles 
+        self.is_sliding_window = sliding_window
+        self.timestamp_id = timestamp_id
+        self.pickling = pickling
+
+        # other values written
         self.model = RandomForestQuantileRegressor()
         self.df = pd.DataFrame()
         self.train_batch = pd.DataFrame()
-        self.drop_cols = drop_cols
 
-        self.job_type = job_type
+
         self.job_type_str = job_types.JOB_TYPE_TO_STR[job_type]
         self.is_trained = False
-        self.quantiles = quantiles 
-        self.is_sliding_window = sliding_window
+        self.train_iter = 0
 
-        self.predicted_plot_x = []
-        self.predicted_plot_y = [[] for _ in range(len(quantiles))]
-        self.plot_iter = 0
+        # pickle_dir/input_file/app_name/*
+        self.pickling_dir = f"{PICKLE_DIR}{input_file.split("/")[-1].replace(" ","-")}/{self.job_type_str.replace(" ","-")}/"
 
-        self.timestamp_id = timestamp_id
+    def get_pickle_name(self,train_iter):
+        return  f"regressor-{train_iter}-{TRAIN_MAX}-{WINDOW_MAX}-{RETRAIN_MAX}"
+    
+    def pickle_regressor(self,regressor,train_iter):
+        if not SHOULD_PICKLE:
+            return 
+
+        if not os.path.exists(self.pickling_dir):
+            os.makedirs(self.pickling_dir)
+        
+        pickled_data = PickleData(train_max=TRAIN_MAX,
+                   window_max=WINDOW_MAX,
+                   retrain_max=RETRAIN_MAX,
+                   data=regressor)
+        
+
+        pickle.dump(pickled_data, open(self.pickling_dir + self.get_pickle_name(train_iter), 'wb'))
+
+    def depickle_regressor(self,train_iter):
+        pickle_data = pickle.load(open(self.pickling_dir + self.get_pickle_name(train_iter), 'rb'))
+        return pickle_data.get_data()
 
     def concat(self, new_df):
         # not sliding window or we aren't ready to trim the window
@@ -76,59 +173,12 @@ class Controller():
 
             X = X.drop(columns=col)
 
-        return X,y
-    
-    def generate_preprocessor(self, X):
-        numeric_features = []
-        categorical_features = []
-        # X = self.df # to adapt to the copied code
-    
-        for col in X:
-            # Identify what type each column is.
-            isNumeric = True
-            for rowIndex, row in X[col].items():
-                try:
-                    # If it can be a float, make it a float.
-                    X.loc[col][rowIndex] = float(X.loc[col][rowIndex])
-                    # If the float is NaN (unacceptable to Sci-kit), make it -1.0 for now.
-                    if pd.isnull(X[col][rowIndex]):
-                        X.loc[col][rowIndex] = -1.0
-                except:
-                    # Otherwise, we will assume this is categorical data.
-                    isNumeric = False
-            if isNumeric or X[col].dtype == float:
-                # For whatever reason, float conversions don't want to work in Pandas dataframes.
-                # Try changing the value column-wide instead.
-                # TODO: Doesn't seem to actually solve anything.
-                # X.loc[col] = X.loc[col].astype(float)
-                numeric_features.append(str(col))
-            else:
-                categorical_features.append(str(col))
-
-        # Standardization for numeric data.
-        numeric_transformer = Pipeline(
-            steps=[("imputer", SimpleImputer(strategy="median")),
-                ("scaler", StandardScaler())])
-
-        # One-hot encoding for categorical data.
-        categorical_transformer = OneHotEncoder(sparse_output=False, handle_unknown="ignore")
-        # Add the transformers to a preprocessor object.
-        preprocessor = ColumnTransformer(transformers=[
-            ("num", numeric_transformer, numeric_features),
-            ("cat", categorical_transformer, categorical_features),])
-
-        return preprocessor
-    
-    def get_pipeline(self, preprocessor, clf):
-        """ 
-        Convenience function to add a preprocessor to a regression pipeline.
-        """
-        return Pipeline(steps=[("preprocessor", preprocessor), ("classifier", clf)])
+        return X,y 
 
     def get_regressor(self,X):
-        preprocessor = self.generate_preprocessor(X)
-        return self.get_pipeline(preprocessor, self.model)
-    
+        preprocessor = generate_preprocessor(X)
+        return get_pipeline(preprocessor, self.model)
+
     def fit(self, job):
         # save real runtime so we can train on it
         job.input_params["timeTaken"] = job.actual_run_time 
@@ -145,34 +195,43 @@ class Controller():
             # print(self.train_batch,pd.DataFrame([job.input_params]))
             return
         
-        # plot logic
-        # if self.is_trained:
-            # self.plot()
+        """
+        fetching our regressor from our pickles
+        """
+        if self.pickling:
+            self.regressor = self.depickle_regressor(self.train_iter)
+            self.train_iter += 1
+            self.is_trained = True
+            self.train_batch = pd.DataFrame()
+            return
+
+        """
+        Not pickling so we must train the model
+        """
 
         # print(len(self.df))
         self.concat(self.train_batch)
 
         # temp code to verify dataframe
         X,y = self.transform_df(predictCol="timeTaken")
-        # X = X.to_numpy(dtype=np.float64)
-        # from threadpoolctl import threadpool_info
-        # print(threadpool_info())
-        # print(X.shape,y.shape)
 
         # print("saved dataframe")
         # X.to_csv(f"results/{self.timestamp_id}/job-{self.job_type_str}-out.csv")
         regressor = self.get_regressor(X)
-        # print(X.dtypes,regressor)
-        print("got regressor")
 
         startTime = time.process_time()
+
         self.regressor = regressor.fit(X, y)
+        self.pickle_regressor(self.regressor, self.train_iter)
+        print("saving regressor ",self.train_iter)
+
         endTime = time.process_time()
         print(self.job_type_str,'finsihed train on',self.df.shape[0],"data points - total time: ",endTime-startTime)
 
         # finishing the training
         self.is_trained = True
         self.train_batch = pd.DataFrame() # clear the batch 
+        self.train_iter += 1 # inc train iter for pickling tracking and other stuff
             
     def predict(self,raw_job):
         """
@@ -185,34 +244,8 @@ class Controller():
 
         x = pd.DataFrame([raw_job.input_params])
         result = self.regressor.predict(x,quantiles=self.quantiles)
-        r = result[0]
-        for i in range(len(self.quantiles)):
-            self.predicted_plot_y[i].append(r[i])
-        self.predicted_plot_x.append(raw_job.actual_run_time)
             
-        return result
-    
-    def plot(self):
-        colors = ['blue','green','red']
-        x = np.array(self.predicted_plot_x)
-        for i in range(len(self.quantiles)):
-            plt.scatter(
-                x,
-                np.array(self.predicted_plot_y[i]),
-                c=colors[i],
-                label=str(self.quantiles[i]),
-                alpha=0.7)
-        plt.scatter(x,x,c="black",label="actual_value",alpha=0.7)
-
-        title = self.job_type_str+" train_iter: "+str(self.plot_iter)
-        plt.xlabel("Actual Runtime")
-        plt.ylabel("Predicted Runtime")
-        plt.title(title)
-        plt.legend()
-        plt.savefig(f"results/{self.timestamp_id}/{self.job_type_str}/{title.replace(" ","-")}.png")
-        plt.close()
-
-        self.plot_iter+=1 
+        return result 
 
     @property
     def df_rows(self):
@@ -225,9 +258,12 @@ class PredictorQuantileForest(Predictor):
     def __init__(self, options):
         # do anything necessary that will require inits, 
         # so like creating the quantile forest model and selecting interval 
-        self.drop_cols = defaultdict(list)
         import warnings
-        import pandas as pd
+
+        self.drop_cols = defaultdict(list)
+        if SHOULD_PICKLE:
+            print("WARNING, we are pickling results, which is expensive")
+
 
         warnings.filterwarnings(
             "ignore",
@@ -267,7 +303,9 @@ class PredictorQuantileForest(Predictor):
                 job_type=job_type,
                 timestamp_id=timestamp_id,
                 quantiles=[0.1,0.5,0.99],
+                input_file=options["input_file"],
                 sliding_window=True,
+                pickling=SHOULD_DEPICKLE,
                 drop_cols=self.drop_cols[job_type])
             os.makedirs(f"results/{timestamp_id}/{job_types.JOB_TYPE_TO_STR[job_type]}")
 
@@ -289,10 +327,11 @@ class PredictorQuantileForest(Predictor):
         # print(result[0],job.actual_run_time)
         q50 = int(result[0][1])
         q99 = int(result[0][2])
-        if q50 > job.user_estimated_run_time:
+        predict = q99
+        if predict > job.user_estimated_run_time:
             job.predicted_run_time = job.user_estimated_run_time
         else:
-            job.predicted_run_time = q50
+            job.predicted_run_time = predict 
         # job.predicted_run_time = int(result[0][0]) # 50th
 
     """
