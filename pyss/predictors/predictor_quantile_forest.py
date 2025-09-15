@@ -25,8 +25,8 @@ TRAIN_MAX = 5000
 RETRAIN_MAX = 100 # https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7776517
 
 PICKLE_DIR = "./pickles/"
-SHOULD_DEPICKLE = True 
-SHOULD_PICKLE = True
+SHOULD_DEPICKLE = False 
+SHOULD_PICKLE = False
 
 # helper functions when processing data
 def generate_preprocessor(X):
@@ -126,6 +126,8 @@ class Controller():
     def pickle_regressor(self,regressor,train_iter):
         if not SHOULD_PICKLE:
             return 
+        
+        print("saving regressor ",self.train_iter)
 
         if not os.path.exists(self.pickling_dir):
             os.makedirs(self.pickling_dir)
@@ -151,9 +153,9 @@ class Controller():
         # adjusting train window
         self.df = pd.concat([self.df.iloc[RETRAIN_MAX:],new_df],ignore_index=True)
 
-    def transform_df(self, predictCol):
-        X = self.df
-        y = self.df[predictCol]
+    def transform_df(self, df, predictCol):
+        X = df
+        y = df[predictCol]
 
         # replacements for base cases - can abstract later for more control if we need it
         X = X.replace('on', '1', regex=True)
@@ -213,7 +215,7 @@ class Controller():
         self.concat(self.train_batch)
 
         # temp code to verify dataframe
-        X,y = self.transform_df(predictCol="timeTaken")
+        X,y = self.transform_df(self.df,predictCol="timeTaken")
 
         # print("saved dataframe")
         # X.to_csv(f"results/{self.timestamp_id}/job-{self.job_type_str}-out.csv")
@@ -223,7 +225,6 @@ class Controller():
 
         self.regressor = regressor.fit(X, y)
         self.pickle_regressor(self.regressor, self.train_iter)
-        print("saving regressor ",self.train_iter)
 
         endTime = time.process_time()
         print(self.job_type_str,'finsihed train on',self.df.shape[0],"data points - total time: ",endTime-startTime)
@@ -233,7 +234,7 @@ class Controller():
         self.train_batch = pd.DataFrame() # clear the batch 
         self.train_iter += 1 # inc train iter for pickling tracking and other stuff
             
-    def predict(self,raw_job):
+    def predict(self,raw_job,quantile_idx):
         """
         pass in raw job given by the predict function in the simulator. 
         Then we will parse the job and put into a format for our predictor to understand 
@@ -243,9 +244,37 @@ class Controller():
             exit()  
 
         x = pd.DataFrame([raw_job.input_params])
+
+        if not self.is_within_bounds(x,self.get_column_bounds(self.df)):
+            print("out of bounds...")
+            return raw_job.user_estimated_run_time
+
         result = self.regressor.predict(x,quantiles=self.quantiles)
             
-        return result 
+        return result[0][quantile_idx]
+
+    def get_column_bounds(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Return the min and max of each column in the dataframe.
+        """
+        return pd.DataFrame({
+            "min": df.min(),
+            "max": df.max()
+        })
+
+
+    def is_within_bounds(self, df: pd.DataFrame, bounds: pd.DataFrame) -> bool:
+        """
+        Return True if every value in df is within the bounds.
+        Return False immediately if anything is out of bounds.
+        """
+        for col in bounds.index:
+            if not col in df: continue # skip if column is not in our bounds
+            col_min = bounds.loc[col, "min"]
+            col_max = bounds.loc[col, "max"]
+            if not ((df[col] >= col_min) & (df[col] <= col_max)).all():
+                return False
+        return True
 
     @property
     def df_rows(self):
@@ -302,7 +331,7 @@ class PredictorQuantileForest(Predictor):
             self.controllers[job_type] = Controller(
                 job_type=job_type,
                 timestamp_id=timestamp_id,
-                quantiles=[0.1,0.5,0.99],
+                quantiles=[0.1,0.5,0.99,1],
                 input_file=options["input_file"],
                 sliding_window=True,
                 pickling=SHOULD_DEPICKLE,
@@ -321,13 +350,11 @@ class PredictorQuantileForest(Predictor):
             job.predicted_run_time = job.user_estimated_run_time
             return
         
-        # print(controller.predict(job),job.actual_run_time)        
-        result = controller.predict(job) # [[q1,q2,q3]]
-        # print(result, type(result), type(result[0][0]))
-        # print(result[0],job.actual_run_time)
-        q50 = int(result[0][1])
-        q99 = int(result[0][2])
-        predict = q99
+        Q50 = 1
+        Q99 = 2 
+        Q100 = 3
+        predict = controller.predict(job,quantile_idx=Q50) # [[q1,q2,q3]]
+
         if predict > job.user_estimated_run_time:
             job.predicted_run_time = job.user_estimated_run_time
         else:
