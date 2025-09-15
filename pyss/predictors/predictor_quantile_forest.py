@@ -17,6 +17,7 @@ from sklearn import feature_selection
 import pickle
 import pandas as pd
 import time
+import math
 
 import os
 
@@ -96,7 +97,9 @@ Each application gets there own Controller which wraps the necessary logic and f
 """
 class Controller():
     def __init__(self, job_type, timestamp_id,
-                 quantiles, input_file : str, pickling=False,
+                 quantiles, input_file : str, 
+                 should_depickle=False,
+                 should_pickle=False,
                  sliding_window=False, drop_cols=[]): 
         
         # consturctor args
@@ -105,7 +108,8 @@ class Controller():
         self.quantiles = quantiles 
         self.is_sliding_window = sliding_window
         self.timestamp_id = timestamp_id
-        self.pickling = pickling
+        self.should_depickle = should_depickle
+        self.should_pickle = should_pickle 
 
         # other values written
         self.model = RandomForestQuantileRegressor()
@@ -124,7 +128,7 @@ class Controller():
         return  f"regressor-{train_iter}-{TRAIN_MAX}-{WINDOW_MAX}-{RETRAIN_MAX}"
     
     def pickle_regressor(self,regressor,train_iter):
-        if not SHOULD_PICKLE:
+        if not self.should_pickle:
             return 
         
         print("saving regressor ",self.train_iter)
@@ -200,7 +204,7 @@ class Controller():
         """
         fetching our regressor from our pickles
         """
-        if self.pickling:
+        if self.should_depickle:
             self.regressor = self.depickle_regressor(self.train_iter)
             self.train_iter += 1
             self.is_trained = True
@@ -234,7 +238,7 @@ class Controller():
         self.train_batch = pd.DataFrame() # clear the batch 
         self.train_iter += 1 # inc train iter for pickling tracking and other stuff
             
-    def predict(self,raw_job,quantile_idx):
+    def predict(self,raw_job):
         """
         pass in raw job given by the predict function in the simulator. 
         Then we will parse the job and put into a format for our predictor to understand 
@@ -251,7 +255,7 @@ class Controller():
 
         result = self.regressor.predict(x,quantiles=self.quantiles)
             
-        return result[0][quantile_idx]
+        return math.ceil(result[0])
 
     def get_column_bounds(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -290,7 +294,7 @@ class PredictorQuantileForest(Predictor):
         import warnings
 
         self.drop_cols = defaultdict(list)
-        if SHOULD_PICKLE:
+        if options["pickle"]:
             print("WARNING, we are pickling results, which is expensive")
 
 
@@ -331,10 +335,11 @@ class PredictorQuantileForest(Predictor):
             self.controllers[job_type] = Controller(
                 job_type=job_type,
                 timestamp_id=timestamp_id,
-                quantiles=[0.1,0.5,0.99,1],
+                quantiles=[options["quantile"]],
                 input_file=options["input_file"],
                 sliding_window=True,
-                pickling=SHOULD_DEPICKLE,
+                should_pickle=options["pickle"],
+                should_depickle=options["depickle"],
                 drop_cols=self.drop_cols[job_type])
             os.makedirs(f"results/{timestamp_id}/{job_types.JOB_TYPE_TO_STR[job_type]}")
 
@@ -350,10 +355,7 @@ class PredictorQuantileForest(Predictor):
             job.predicted_run_time = job.user_estimated_run_time
             return
         
-        Q50 = 1
-        Q99 = 2 
-        Q100 = 3
-        predict = controller.predict(job,quantile_idx=Q50) # [[q1,q2,q3]]
+        predict = controller.predict(job) 
 
         if predict > job.user_estimated_run_time:
             job.predicted_run_time = job.user_estimated_run_time

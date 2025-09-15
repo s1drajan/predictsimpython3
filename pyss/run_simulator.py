@@ -5,13 +5,16 @@
 Run the PySS Simulator.
 
 Usage:
-    run_simulator.py <swf_file> <config_file> <output_file> [-i] [-v] [--withprogress=<seconds>]
+    run_simulator.py <swf_file> <config_file> <output_file> [-i] [-v] [--withprogress=<seconds>] [--pickle] [--depickle] [--quantile=<precentile>] 
 
 Options:
     -h --help                                      Show this help message and exit.
     -v --verbose                                   Be verbose.
     -i --interactive                               Interactive mode at key points in script.
     --withprogress=<seconds>                       Set progress frequency
+    --pickle                                       Should Pickle regressors
+    --depickle                                     Should depickle existing pickles
+    --quantile=<precentile>                        A float between (0,1]
 """
 
 from docopt import docopt
@@ -87,13 +90,26 @@ def parse_and_run_simulator(options, exception):
             input_file.close()
 
 
-def run_simulator(input_file, config_file, output_file, exception, withprogress=0):
+def run_simulator(args, input_file, config_file, output_file, exception, withprogress=0):
     config = {}
     exec(open(config_file).read(), config)  # Python 3 replacement for execfile
     config.pop('__builtins__', None)
 
     config["input_file"] = input_file
     config["output_swf"] = output_file
+    config["pickle"] = args.get("--pickle") 
+    config["depickle"] = args.get("--depickle") 
+
+    if "quantile" in config_file_.lower():
+        quant = arguments.get("--quantile")
+        if not quant: 
+            exit("need to provide a quantile when running a quantile regressor use -h for help")
+        quant = float(quant)
+
+        if quant > 1 or quant <= 0:
+            exit("invalid quantile")
+
+        config["quantile"] = quant        
 
     if withprogress:
         config['scheduler']['progressfile_freq'] = int(withprogress)
@@ -107,5 +123,6 @@ if __name__ == "__main__":
     config_file_ = arguments["<config_file>"]
     input_file_ = arguments["<swf_file>"]
     withprogress = arguments.get("--withprogress")
-    run_simulator(input_file_, config_file_, output_file_, Exception, withprogress)
+
+    run_simulator(arguments, input_file_, config_file_, output_file_, Exception, withprogress)
 
