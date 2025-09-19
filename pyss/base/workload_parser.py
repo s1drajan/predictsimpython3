@@ -63,21 +63,20 @@ class JobInput(object):
 
     def parse_line(self,line):
         line = line.rstrip()   
-        tmp = line.split("  ", maxsplit=1)
+        tmp = line.split(maxsplit=18) 
     
         tmp_size = len(tmp)
         if tmp_size == 0:
             exit("error parsing line led us to zero")
     
-        default = tmp[0].rstrip().split(" ") 
-        self.fields = default
+        self.fields = tmp[:SWF_DEFAULT_PARAMS] # first 18 are default params
 
         # no params skipp over
-        if tmp_size == 1:
+        if tmp_size <= SWF_DEFAULT_PARAMS:
             return
     
         # we have params so parse them
-        params = tmp[1]
+        params = tmp[SWF_DEFAULT_PARAMS]
         param_map, app_id = parse_params(line=params)
 
         self.params = param_map
