@@ -29,6 +29,8 @@ PICKLE_DIR = "./pickles/"
 SHOULD_DEPICKLE = False 
 SHOULD_PICKLE = False
 
+PRINT_CNT = 0
+
 # helper functions when processing data
 def generate_preprocessor(X):
     numeric_features = []
@@ -116,8 +118,11 @@ class Controller():
         self.df = pd.DataFrame()
         self.train_batch = pd.DataFrame()
 
+        self.OUT_OF_BOUNDS = 0
+        self.UNDER_PREDICT_W_BOUNDS = 0
+        self.UNDER_PREDICT_WO_BOUNDS = 0
 
-        self.job_type_str = job_types.JOB_TYPE_TO_STR[job_type]
+        self.job_type_str = job_types.app_name_map[job_type]
         self.is_trained = False
         self.train_iter = 0
 
@@ -179,6 +184,8 @@ class Controller():
 
             X = X.drop(columns=col)
 
+        X = X.drop(columns="nodes")
+        X = X.drop(columns="tasks")
         return X,y 
 
     def get_regressor(self,X):
@@ -187,8 +194,11 @@ class Controller():
 
     def fit(self, job):
         # save real runtime so we can train on it
+        global PRINT_CNT
         job.input_params["timeTaken"] = job.actual_run_time 
-
+        
+        # print("begining fit",PRINT_CNT)
+        # PRINT_CNT+=1
         # training logic
         # if time for retrain
         # or time for first train 
@@ -201,6 +211,8 @@ class Controller():
             # print(self.train_batch,pd.DataFrame([job.input_params]))
             return
         
+        self.concat(self.train_batch)
+
         """
         fetching our regressor from our pickles
         """
@@ -209,6 +221,9 @@ class Controller():
             self.train_iter += 1
             self.is_trained = True
             self.train_batch = pd.DataFrame()
+            print(f"{self.job_type_str} finsihed train on {self.df.shape[0]} "+
+              f"Under_w_bounds {self.UNDER_PREDICT_W_BOUNDS} under_wo_bounds {self.UNDER_PREDICT_WO_BOUNDS} "+
+              f"Out_of_bounds {self.OUT_OF_BOUNDS} | BAD_Out_of_bounds {self.OUT_OF_BOUNDS-self.UNDER_PREDICT_WO_BOUNDS}")
             return
 
         """
@@ -216,7 +231,6 @@ class Controller():
         """
 
         # print(len(self.df))
-        self.concat(self.train_batch)
 
         # temp code to verify dataframe
         X,y = self.transform_df(self.df,predictCol="timeTaken")
@@ -231,30 +245,48 @@ class Controller():
         self.pickle_regressor(self.regressor, self.train_iter)
 
         endTime = time.process_time()
-        print(self.job_type_str,'finsihed train on',self.df.shape[0],"data points - total time: ",endTime-startTime)
+        print(f"{self.job_type_str} finsihed train on {self.df.shape[0]} "+
+              f"data points - total time: {endTime-startTime}") #+
+            #   f"Under_w_bounds {self.UNDER_PREDICT_W_BOUNDS} under_wo_bounds {self.UNDER_PREDICT_WO_BOUNDS} "+
+            #   f"Out_of_bounds {self.OUT_OF_BOUNDS} | BAD_Out_of_bounds {self.OUT_OF_BOUNDS-self.UNDER_PREDICT_WO_BOUNDS}")
 
         # finishing the training
         self.is_trained = True
         self.train_batch = pd.DataFrame() # clear the batch 
         self.train_iter += 1 # inc train iter for pickling tracking and other stuff
+
+        # print("ending fit",PRINT_CNT)
+        # PRINT_CNT+=1
+
             
     def predict(self,raw_job):
         """
         pass in raw job given by the predict function in the simulator. 
         Then we will parse the job and put into a format for our predictor to understand 
         """
+        global PRINT_CNT
         if not self.regressor or not self.is_trained:
             print("WARNING WE HAVE NO REGRESSOR TO PREDICT ON, FORCING CRASH")
             exit()  
+        # print("starting predict",PRINT_CNT)
+        # PRINT_CNT+=1
 
         x = pd.DataFrame([raw_job.input_params])
 
-        if not self.is_within_bounds(x,self.get_column_bounds(self.df)):
-            print("out of bounds...")
-            return raw_job.user_estimated_run_time
-
         result = self.regressor.predict(x,quantiles=self.quantiles)
-            
+
+        # print("checking within boudns")
+        # if not self.is_within_bounds(x,self.get_column_bounds(self.df)):
+        #     # print("out of bounds...")
+        #     self.OUT_OF_BOUNDS += 1
+        #     self.UNDER_PREDICT_WO_BOUNDS += 1 if raw_job.actual_run_time > result[0] else 0
+        #     return raw_job.user_estimated_run_time
+
+        # self.UNDER_PREDICT_W_BOUNDS += 1 if raw_job.actual_run_time > result[0] else 0
+        
+        # print("ending predict",PRINT_CNT)
+        # PRINT_CNT+=1
+
         return math.ceil(result[0])
 
     def get_column_bounds(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -272,6 +304,8 @@ class Controller():
         Return True if every value in df is within the bounds.
         Return False immediately if anything is out of bounds.
         """
+        return True
+
         for col in bounds.index:
             if not col in df: continue # skip if column is not in our bounds
             col_min = bounds.loc[col, "min"]
@@ -289,14 +323,13 @@ class PredictorQuantileForest(Predictor):
     estimate_runtime = predict off quantile forest ml
     """
     def __init__(self, options):
+        # must do lazy init sinze we initalize our predictor before we parse
+        self.init = False
+        self.options = options
+       
         # do anything necessary that will require inits, 
         # so like creating the quantile forest model and selecting interval 
-        import warnings
-
-        self.drop_cols = defaultdict(list)
-        if options["pickle"]:
-            print("WARNING, we are pickling results, which is expensive")
-
+        import warnings 
 
         warnings.filterwarnings(
             "ignore",
@@ -304,34 +337,16 @@ class PredictorQuantileForest(Predictor):
             message="The behavior of DataFrame concatenation with empty or all-NA entries is deprecated.*"
         )
 
-        self.drop_cols[job_types.JOB_TYPE_EXAMINIMDSNAP] = [ 
-            "testNum",
-            "units",
-            "lattice",
-            "lattice_constant",
-            "lattice_offset_x",
-            "lattice_offset_y",
-            "lattice_offset_z",
-            "lattice_ny",
-            "lattice_nz",
-            "ntypes",
-            "type",
-            "mass",
-            "force_cutoff",
-            "temperature_target",
-            "temperature_seed",
-            "neighbor_skin",
-            "comm_exchange_rate",
-            "thermo_rate",
-            "comm_newton",
-            "error"
-        ]
+        pass
+    def lazy_init(self):
+        if self.init: return
 
         self.controllers = {}
-        self.train_batch = pd.DataFrame()
 
         timestamp_id = time.time()
-        for job_type in job_types.JOB_TYPE_RANGE:
+        options = self.options
+
+        for job_type in job_types.job_ids:
             self.controllers[job_type] = Controller(
                 job_type=job_type,
                 timestamp_id=timestamp_id,
@@ -340,15 +355,13 @@ class PredictorQuantileForest(Predictor):
                 sliding_window=True,
                 should_pickle=options["pickle"],
                 should_depickle=options["depickle"],
-                drop_cols=self.drop_cols[job_type])
-            os.makedirs(f"results/{timestamp_id}/{job_types.JOB_TYPE_TO_STR[job_type]}")
+                drop_cols=job_types.drop_param_map[job_type])
 
-        pass
+        self.init = True #initalize our predictor
     
     def predict(self, job, current_time, list_running_jobs):
-        # when we start prediction follow this algorithm
-        # P = quant.predict(), if P > requested_time: requested_time else P
-        # maybe some methodogly could be used that if we our under a specfic runtime then we shouldn't predict
+        self.lazy_init()
+
         controller = self.controllers[job.job_type]
 
         if not controller.is_trained:
@@ -358,10 +371,10 @@ class PredictorQuantileForest(Predictor):
         predict = controller.predict(job) 
 
         if predict > job.user_estimated_run_time:
+            print("over predict user runtime")
             job.predicted_run_time = job.user_estimated_run_time
         else:
             job.predicted_run_time = predict 
-        # job.predicted_run_time = int(result[0][0]) # 50th
 
     """
     This function will be used to train and retrain the model
@@ -369,5 +382,8 @@ class PredictorQuantileForest(Predictor):
     For now we will just implement the intital train (5000 jobs) and worry about retraining later
     """
     def fit(self, job, current_time):
+        self.lazy_init()
+
+        # print("fitting")
         controller = self.controllers[job.job_type]
         controller.fit(job) 

@@ -8,18 +8,45 @@
 # http://www.cs.huji.ac.il/labs/parallel/workload/
 # job type identification 
 from . import job_types
+import numpy as np
+
+PARAM_TOKEN = "params"
+DROP_TOKEN = "drop_col"
 
 SWF_DEFAULT_PARAMS = 18
 
-# len --> type
-# if we have different jobs we will want to make a more complex parser such as adding an id col
-# this will work for now
-len_param_map = {
-    SWF_DEFAULT_PARAMS + len(job_types.params_map[job_types.JOB_TYPE_DEFAULT]): job_types.JOB_TYPE_DEFAULT,
-    SWF_DEFAULT_PARAMS + len(job_types.params_map[job_types.JOB_TYPE_SWFFT]): job_types.JOB_TYPE_SWFFT,
-    SWF_DEFAULT_PARAMS + len(job_types.params_map[job_types.JOB_TYPE_NEKBONE]): job_types.JOB_TYPE_NEKBONE,
-    SWF_DEFAULT_PARAMS + len(job_types.params_map[job_types.JOB_TYPE_EXAMINIMDSNAP]): job_types.JOB_TYPE_EXAMINIMDSNAP 
-}
+SUBMIT_DIST_N = 100000
+CURR_DIST_IDX = 0
+SAMPLE_TIME = 1
+rng = np.random.default_rng(seed=42)
+dist = rng.normal(loc=1,scale=5,size=SUBMIT_DIST_N)
+job_submit_dist = list(map(lambda x: (abs(x) * 100)+5, dist))
+
+def submit_job():
+    global CURR_DIST_IDX, SAMPLE_TIME, SUBMIT_DIST_N
+    CURR_DIST_IDX += 1
+    SAMPLE_TIME += 2
+    return SAMPLE_TIME + int(job_submit_dist[CURR_DIST_IDX % SUBMIT_DIST_N])
+
+def parse_params(line):
+    line = line.strip()
+
+    tokens = line.split(" ")
+    app_id = int(tokens[0])
+    params = tokens[1:]
+          
+    result = {}
+    for idx, param_name in enumerate(job_types.param_map[app_id]):
+        try:
+            if params[idx] in [""," "]:    
+                result[param_name] = None #null
+                continue
+            value = float(params[idx])
+        except:
+            value = str(params[idx])
+
+        result[param_name] = value
+    return result, app_id
 
 class JobInput(object): 
     def __init__(self, line):
@@ -30,56 +57,31 @@ class JobInput(object):
         since we are splitting on line.split(" "). 
         For our param.swf we will parse on (" ") so every space must have a meaning (no dead space unless null or \t) 
         '''
-        
-
-        #checking default swf file
-        tmp = line.split()
         self.job_type = job_types.JOB_TYPE_DEFAULT 
+        self.params = {}
+        self.parse_line(line=line)
 
-        if len(tmp) == SWF_DEFAULT_PARAMS:
-            self.fields = tmp
-            self.params = {}
-            return 
+    def parse_line(self,line):
+        line = line.rstrip()   
+        tmp = line.split("  ", maxsplit=1)
+    
+        tmp_size = len(tmp)
+        if tmp_size == 0:
+            exit("error parsing line led us to zero")
+    
+        default = tmp[0].rstrip().split(" ") 
+        self.fields = default
 
-        # has params
-        self.fields = line.strip().split(" ")
-        self.params = self.help_parse_params()
-        # x = len(self.fields)
-        # print(self.fields, x, x in len_param_map)
-        # exit()
-        pass #assert len(self.fields) == 18
+        # no params skipp over
+        if tmp_size == 1:
+            return
+    
+        # we have params so parse them
+        params = tmp[1]
+        param_map, app_id = parse_params(line=params)
 
-    # parses the extra params and returns a map containing (param: str, value: int)
-    def help_parse_params(self):
-        # print(self.fields)
-        self.job_type = job_types.JOB_TYPE_DEFAULT
-        param_map = {}
-        field_len = len(self.fields)-1 # -1 to account for separating space from DEFAULT_PARAMS ' ' INPUT_PARAMS
-
-        if not field_len in len_param_map:
-            print("WARNING: job does not have expected number of fields, returning DEFAULT. Check workload_parser for more information",self.fields)
-            return param_map
-            
-        self.job_type = len_param_map[field_len]
-
-        # enumerate through params for this type of job
-        START_ADJST = 19 # starting index for the first custom param (the first 18 are default swf params)
-        for idx, param in enumerate(job_types.params_map[self.job_type]):
-            # decouple tuple (key, value type)
-            key, _type = param 
-            param_val = self.fields[START_ADJST+idx]
-
-            # if null 
-            if param_val == ' ' or param_val == '':
-                param_map[key] = None
-                continue
-            # write value parsed as type
-            # print(param,self.fields[START_ADJST+idx])  
-            param_map[key] = _type(param_val) 
-        
-        # print(param_map,self.job_type)
-        return param_map
-
+        self.params = param_map
+        self.job_type = app_id
 
     # lazy access as properties, for efficiency
     @property
@@ -87,6 +89,7 @@ class JobInput(object):
         return int(self.fields[0])
     @property
     def submit_time(self):
+        # return submit_job() 
         return int(self.fields[1])
     @property
     def wait_time(self):
@@ -141,27 +144,70 @@ class JobInput(object):
     @property
     def think_time_from_preceding_job(self):
         return int(self.fields[17])
-    # @property
-    # def input_params(self):
-    #     if len(self.fields) > 18:
-    #         return {}
-
-    #     # grab the rest of the params
-    #     return self.fields[18:]
 
     def __str__(self):
         return "JobInput<number=%s>" % self.number
+
+def parse_param_initilizer(line):
+    PARAM_IDX = 3
+    tokens = line.strip().split(" ") 
+
+    token_id, app_name, app_id = tokens[:PARAM_IDX]; app_id = int(app_id)
+    params = tokens[PARAM_IDX:]
+
+    # ensure no collisions in map
+    if (app_id in job_types.param_map 
+        or app_id in job_types.job_ids):
+        exit("failed had a collision in param_map",app_id,app_name)
+ 
+    # setup maps
+    job_types.app_name_map[app_id] = app_name
+    job_types.job_ids.add(app_id)
+    job_types.param_map[app_id] = params
+
+def parse_drop_col_initilizer(line):
+    COLS_IDX = 2
+    tokens = line.strip().split(" ")
+    
+    token_id, app_id = tokens[:COLS_IDX]; app_id = int(app_id)
+    drop_cols = tokens[COLS_IDX:]
+
+    result = []
+
+    for col in drop_cols:
+        if not col in job_types.param_map[app_id]:
+            print(f"WARNING DROP COLUMN \'{col}\' not in param_map [not adding]")
+            continue
+        result.append(col)
+
+    job_types.drop_param_map[app_id] = result 
 
 def parse_lines(lines_iterator):
     "returns an iterator of JobInput objects"
 
     def _should_skip(line): # TODO: skip if runtime, num allocated processors, submit time is problematic
         return (line.lstrip().startswith(';') or (len(line.strip()) == 0)) # comment or empty line 
+    
+    def _param_parse(line):
+        return line.lstrip().startswith(PARAM_TOKEN)
+    def _drop_col_parse(line):
+        return line.lstrip().startswith(DROP_TOKEN)
          
 
     for line in lines_iterator:
         if _should_skip(line):
             continue # skipping
+
+        # parse params
+        if _param_parse(line):
+            parse_param_initilizer(line=line)
+            continue
+
+        # parse drop column 
+        if _drop_col_parse(line):
+            parse_drop_col_initilizer(line=line)
+            continue
+
 
         yield JobInput(line)
 
